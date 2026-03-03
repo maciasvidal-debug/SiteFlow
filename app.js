@@ -121,13 +121,67 @@ const textareaDescripcion = document.getElementById('descripcion');
 const labelDescripcion = document.getElementById('labelDescripcion');
 
 const opcionesPorCategoria = {
-    monitoreo: ["Visita de Selección (PSV)", "Visita de Inicio (SIV)", "Visita de Monitoreo (RMV)", "Visita de Cierre (COV)", "Otra"],
-    documentacion: ["Actualización de TMF", "Revisión de Consentimientos (ICF)", "Gestión de Queries", "Otra"],
-    entrenamiento: ["Entrenamiento en Protocolo", "Entrenamiento en GCP", "Entrenamiento en EDC/Sistemas", "Otra"],
-    reuniones: ["Reunión de Equipo de Estudio", "Reunión con el Sponsor", "Reunión con el Sitio Clínico", "Otra"],
-    coordinacion: ["Visita de Paciente (Screening/Randomización)", "Seguimiento de Paciente", "Manejo de Muestras/Laboratorio", "Manejo de Droga de Estudio (IP)", "Otra"],
-    data_entry: ["Ingreso de Datos en eCRF", "Resolución de Queries", "Conciliación de Datos/SAEs", "Otra"],
-    regulatorio: ["Sometimiento a Comité de Ética (IRB/IEC)", "Sometimiento a Agencia Regulatoria", "Actualización de Documentos Esenciales", "Gestión de Enmiendas", "Otra"]
+    monitoreo: [
+        "Visita de Selección (PSV)", 
+        "Visita de Inicio (SIV)", 
+        "Visita de Monitoreo Interino (IMV/RMV)", 
+        "Visita de Cierre (COV)", 
+        "Preparación/Atención de Auditorías o Inspecciones",
+        "Seguimiento de Hallazgos (Action Items)",
+        "Otra"
+    ],
+    documentacion: [
+        "Actualización de TMF / ISF", 
+        "Control de Versiones y Archivo", 
+        "Gestión de Firmas (DOA, FDA 1572)", 
+        "Revisión de Calidad (QC) de Documentos", 
+        "Manejo de Correspondencia del Estudio", 
+        "Preparación de Manuales/Checklists",
+        "Otra"
+    ],
+    entrenamiento: [
+        "Entrenamiento en Protocolo / Enmiendas", 
+        "Entrenamiento en Buenas Prácticas Clínicas (GCP)", 
+        "Entrenamiento en Sistemas (EDC, CTMS, eISF)", 
+        "Inducción (Onboarding) de Equipo", 
+        "Otra"
+    ],
+    reuniones: [
+        "Reunión de Equipo de Estudio (Interna)", 
+        "Reunión con el Sponsor / CRO", 
+        "Reunión de Investigadores (Investigator Meeting)", 
+        "Reunión con el Sitio Clínico / Proveedores", 
+        "Elaboración de Minutas de Reunión",
+        "Otra"
+    ],
+    coordinacion: [
+        "Pre-Screening y Reclutamiento de Pacientes", 
+        "Proceso de Consentimiento Informado (ICF)", 
+        "Visita de Paciente (Screening/Randomización)", 
+        "Visitas de Seguimiento de Paciente", 
+        "Manejo de Muestras Biológicas (Laboratorio/Envío)", 
+        "Manejo de Droga de Estudio (IP Accountability)", 
+        "Evaluación y Reporte de Eventos Adversos (AE/SAE)",
+        "Educación y Retención de Pacientes",
+        "Otra"
+    ],
+    data_entry: [
+        "Ingreso de Datos en eCRF (EDC)", 
+        "Revisión y Resolución de Queries", 
+        "Control de Calidad (QC) de Datos Ingresados", 
+        "Conciliación de Datos (SAEs, Laboratorios)", 
+        "Gestión de Diarios de Pacientes (ePRO/eDiary)", 
+        "Revisión de Source Documents (Documentos Fuente)",
+        "Otra"
+    ],
+    regulatorio: [
+        "Sometimiento Inicial al Comité de Ética (IRB/IEC)", 
+        "Sometimiento de Enmiendas y Renovaciones Anuales", 
+        "Reporte de Seguridad (SAE/SUSAR) al Comité", 
+        "Sometimiento a Agencia Regulatoria", 
+        "Actualización de Documentos de Investigadores (CVs, Licencias)", 
+        "Otra"
+    ]
 };
 
 selectCategoria.addEventListener('change', () => {
@@ -255,4 +309,5 @@ if ('serviceWorker' in navigator) {
                 console.error('⚠️ Error al registrar el Service Worker:', error);
             });
     });
+
 }
