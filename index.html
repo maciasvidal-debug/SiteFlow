@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>App Clínica CTA</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0078D4">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="vistaRegistro" class="vista activa">
+        <div class="contenedor">
+            <h1 style="margin-top: 0;">Nueva Actividad</h1>
+            
+            <form id="formularioTimesheet">
+                <label>Cronómetro Inteligente:</label>
+                <div class="cronometro-contenedor">
+                    <span id="displayTiempo">00:00:00</span>
+                    <div class="botones-tiempo">
+                        <button type="button" id="btnIniciar" class="btn-tiempo iniciar">Iniciar</button>
+                        <button type="button" id="btnDetener" class="btn-tiempo detener" disabled>Detener</button>
+                    </div>
+                </div>
+
+                <label for="fecha">Fecha (Obligatorio):</label>
+                <input type="date" id="fecha" required>
+
+                <label for="protocolo">Código de Protocolo:</label>
+                <input type="text" id="protocolo" placeholder="Ej. PROT-2026">
+
+                <label for="categoria">Categoría de la Actividad:</label>
+                <select id="categoria" required>
+                    <option value="">-- Selecciona una categoría --</option>
+                    <option value="monitoreo">Monitoreo</option>
+                    <option value="documentacion">Documentación / TMF</option>
+                    <option value="entrenamiento">Entrenamiento</option>
+                    <option value="reuniones">Reuniones</option>
+                    <option value="coordinacion">Coordinación Clínica (CRC)</option>
+                    <option value="data_entry">Entrada de Datos (Data Entry)</option>
+                    <option value="regulatorio">Regulatorio</option>
+                    <option value="otra">Otra (Escribir manualmente)</option>
+                </select>
+
+                <label for="actividadEspecifica" id="labelActividad" class="oculto">Actividad Específica:</label>
+                <select id="actividadEspecifica" class="oculto"></select>
+
+                <label for="descripcion" id="labelDescripcion" class="oculto">Descripción de la actividad (Detalles):</label>
+                <textarea id="descripcion" class="oculto" rows="3" placeholder="Detalla tu actividad aquí..."></textarea>
+
+                <label for="horas">Horas invertidas:</label>
+                <input type="number" id="horas" step="0.5" min="0" placeholder="Ej: 2.5">
+
+                <button type="submit">Guardar Actividad</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="vistaBitacora" class="vista">
+        <div class="contenedor" style="max-width: 600px;">
+            <h1 style="margin-top: 0;">Bitácora de Actividades</h1>
+            
+            <button type="button" id="btnExportar" style="background-color: #107c41; margin-bottom: 20px;">📥 Exportar todo a Excel (CSV)</button>
+
+            <div style="overflow-x: auto; background: white; border-radius: 8px;">
+                <table id="tablaBitacora">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Protocolo</th>
+                            <th>Categoría</th>
+                            <th>Actividad</th>
+                            <th>Horas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <nav class="barra-navegacion">
+        <button id="navBtnRegistro" class="nav-item activo">
+            <span style="font-size: 20px;">📝</span><br>Registrar
+        </button>
+        <button id="navBtnBitacora" class="nav-item">
+            <span style="font-size: 20px;">📊</span><br>Bitácora
+        </button>
+    </nav>
+
+    <div id="toastContainer"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

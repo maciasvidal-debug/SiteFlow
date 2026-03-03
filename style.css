@@ -1,0 +1,162 @@
+/* --- Configuración General de App Móvil --- */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f7f6;
+    margin: 0;
+    padding: 0;
+    /* Esto evita el scrolling general de la página */
+    height: 100vh;
+    overflow: hidden; 
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Lógica de Pantallas (Vistas) --- */
+.vista {
+    display: none; /* Oculta todas las pantallas por defecto */
+    flex: 1; /* Toma todo el espacio sobrante arriba de la barra de navegación */
+    overflow-y: auto; /* Permite hacer scroll SOLO dentro de la pantalla activa */
+    padding: 20px;
+    padding-bottom: 90px; /* Deja espacio para que la barra inferior no tape el contenido */
+}
+
+/* Solo la pantalla que tenga la clase 'activa' se mostrará */
+.vista.activa {
+    display: block;
+}
+
+/* --- Contenedor Blanco --- */
+.contenedor {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto; /* Centra la caja en pantallas grandes */
+    box-sizing: border-box;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    font-size: 22px;
+}
+
+/* --- Formularios y Botones --- */
+label { display: block; margin-top: 15px; font-weight: bold; color: #555; font-size: 14px; }
+input, select, textarea {
+    width: 100%; padding: 10px; margin-top: 5px;
+    border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px;
+}
+button {
+    width: 100%; background-color: #0078D4; color: white; padding: 12px;
+    border: none; border-radius: 5px; margin-top: 20px; font-size: 16px; font-weight: bold; cursor: pointer;
+}
+button:hover { background-color: #005a9e; }
+.oculto { display: none !important; }
+
+/* --- Cronómetro --- */
+.cronometro-contenedor { background-color: #e1dfdd; padding: 15px; border-radius: 8px; text-align: center; margin-top: 5px;}
+#displayTiempo { font-size: 32px; font-weight: bold; color: #333; font-family: monospace; display: block; margin-bottom: 10px; }
+.botones-tiempo { display: flex; gap: 10px; }
+.btn-tiempo { margin-top: 0; }
+.btn-tiempo.iniciar { background-color: #28a745; }
+.btn-tiempo.detener { background-color: #dc3545; }
+.btn-tiempo:disabled { background-color: #ccc; cursor: not-allowed; }
+
+/* --- Barra de Navegación Inferior --- */
+.barra-navegacion {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: white;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    z-index: 1000; /* Asegura que siempre esté por encima de todo */
+}
+
+.nav-item {
+    background: none;
+    border: none;
+    color: #888;
+    margin: 0;
+    padding: 5px;
+    width: auto;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+/* Cuando un botón de navegación está activo, lo pintamos de azul */
+.nav-item.activo {
+    color: #0078D4;
+    font-weight: bold;
+}
+
+/* --- Tabla de la Bitácora --- */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table th { background-color: #f4f7f6; color: #333; padding: 10px; border: 1px solid #ddd; text-align: left; }
+table td { padding: 10px; border: 1px solid #ddd; color: #555; }
+table tbody tr:nth-child(even) { background-color: #fafafa; }
+
+/* --- Toasts (Notificaciones) --- */
+#toastContainer { position: fixed; bottom: 80px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1001; }
+.toast { background-color: #333; color: white; padding: 12px 20px; border-radius: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); font-size: 14px; opacity: 1; transition: opacity 0.5s ease-out; }
+.toast.oculto { opacity: 0; }
+
+/* ========================================== */
+/* DISEÑO RESPONSIVO (Para pantallas grandes) */
+/* ========================================== */
+
+@media (min-width: 768px) {
+    
+    .barra-navegacion {
+        top: 0;
+        bottom: auto; 
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        justify-content: center; 
+        gap: 50px; 
+    }
+
+    body {
+        padding-top: 80px; 
+        height: auto; 
+        overflow: auto; /* CORRECCIÓN: Permite hacer scroll general si la pantalla es muy pequeña */
+    }
+
+    .vista {
+        padding-bottom: 20px; 
+        /* CORRECCIÓN: Eliminamos el 'display: flex' de aquí para que no "despierte" a las vistas ocultas */
+    }
+
+    /* CORRECCIÓN: Solo la vista que esté "activa" usará flexbox para centrarse */
+    .vista.activa {
+        display: flex;
+        justify-content: center;
+    }
+
+    .contenedor {
+        max-width: 700px;
+    }
+
+    #formularioTimesheet {
+        display: grid;
+        grid-template-columns: 1fr 1fr; 
+        gap: 15px; 
+        align-items: start;
+    }
+
+    .cronometro-contenedor, 
+    #labelDescripcion, 
+    #descripcion, 
+    button[type="submit"] {
+        grid-column: span 2;
+    }
+
+    label {
+        margin-top: 0;
+    }
+}
