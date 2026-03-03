@@ -45,19 +45,13 @@ function cambiarVista(vistaDestino) {
     btnNavRegistro.classList.remove('activo');
     btnNavBitacora.classList.remove('activo');
 
-    // Quitamos los atributos aria de pagina activa
-    btnNavRegistro.removeAttribute('aria-current');
-    btnNavBitacora.removeAttribute('aria-current');
-
     // Encendemos solo lo que el usuario pidió
     if (vistaDestino === 'registro') {
         vistaRegistro.classList.add('activa');
         btnNavRegistro.classList.add('activo');
-        btnNavRegistro.setAttribute('aria-current', 'page');
     } else if (vistaDestino === 'bitacora') {
         vistaBitacora.classList.add('activa');
         btnNavBitacora.classList.add('activo');
-        btnNavBitacora.setAttribute('aria-current', 'page');
         actualizarTablaBitacora(); // Refrescamos la tabla al entrar
 
         // CORRECCIÓN UX: Si la bitácora está vacía al entrar, lanzamos un Toast
@@ -191,61 +185,31 @@ const opcionesPorCategoria = {
     ]
 };
 
-// Funciones auxiliares para manejar visibilidad y accesibilidad
-function mostrarElemento(elemento) {
-    if(elemento) {
-        elemento.classList.remove('oculto');
-        elemento.removeAttribute('aria-hidden');
-        if(elemento.tagName === 'SELECT' || elemento.tagName === 'TEXTAREA' || elemento.tagName === 'INPUT') {
-            elemento.setAttribute('required', 'true');
-        }
-    }
-}
-
-function ocultarElemento(elemento) {
-    if(elemento) {
-        elemento.classList.add('oculto');
-        elemento.setAttribute('aria-hidden', 'true');
-        if(elemento.tagName === 'SELECT' || elemento.tagName === 'TEXTAREA' || elemento.tagName === 'INPUT') {
-            elemento.removeAttribute('required');
-            elemento.value = ''; // Limpiar valor al ocultar
-        }
-    }
-}
-
 selectCategoria.addEventListener('change', () => {
     const cat = selectCategoria.value;
     selectActividad.innerHTML = '<option value="">-- Selecciona una actividad --</option>';
 
     if (cat === "otra") {
-        ocultarElemento(selectActividad);
-        ocultarElemento(labelActividad);
-        mostrarElemento(textareaDescripcion);
-        mostrarElemento(labelDescripcion);
+        selectActividad.classList.add('oculto'); labelActividad.classList.add('oculto');
+        textareaDescripcion.classList.remove('oculto'); labelDescripcion.classList.remove('oculto');
     } else if (cat !== "") {
         opcionesPorCategoria[cat].forEach(act => {
             const opt = document.createElement('option'); opt.value = act; opt.textContent = act;
             selectActividad.appendChild(opt);
         });
-        mostrarElemento(selectActividad);
-        mostrarElemento(labelActividad);
-        ocultarElemento(textareaDescripcion);
-        ocultarElemento(labelDescripcion);
+        selectActividad.classList.remove('oculto'); labelActividad.classList.remove('oculto');
+        textareaDescripcion.classList.add('oculto'); labelDescripcion.classList.add('oculto');
     } else {
-        ocultarElemento(selectActividad);
-        ocultarElemento(labelActividad);
-        ocultarElemento(textareaDescripcion);
-        ocultarElemento(labelDescripcion);
+        selectActividad.classList.add('oculto'); labelActividad.classList.add('oculto');
+        textareaDescripcion.classList.add('oculto'); labelDescripcion.classList.add('oculto');
     }
 });
 
 selectActividad.addEventListener('change', () => {
     if (selectActividad.value === "Otra") {
-        mostrarElemento(textareaDescripcion);
-        mostrarElemento(labelDescripcion);
+        textareaDescripcion.classList.remove('oculto'); labelDescripcion.classList.remove('oculto');
     } else {
-        ocultarElemento(textareaDescripcion);
-        ocultarElemento(labelDescripcion);
+        textareaDescripcion.classList.add('oculto'); labelDescripcion.classList.add('oculto');
     }
 });
 
@@ -277,6 +241,8 @@ function actualizarTablaBitacora() {
         "otra": "Otra"
     };
 
+    const fragmento = document.createDocumentFragment();
+
     listaActividades.slice().reverse().forEach(actividad => {
         const fila = document.createElement('tr');
 
@@ -291,8 +257,10 @@ function actualizarTablaBitacora() {
             <td>${actividad.descripcion}</td>
             <td><strong>${actividad.horas}</strong></td>
         `;
-        cuerpoTabla.appendChild(fila);
+        fragmento.appendChild(fila);
     });
+
+    cuerpoTabla.appendChild(fragmento);
 }
 
 formulario.addEventListener('submit', evento => {
@@ -305,7 +273,7 @@ formulario.addEventListener('submit', evento => {
         protocolo: document.getElementById('protocolo').value,
         categoria: selectCategoria.value,
         descripcion: descripcionFinal,
-        horas: parseFloat(document.getElementById('horas').value) || 0
+        horas: parseFloat(document.getElementById('horas').value)
     };
 
     listaActividades.push(datosActividad);
@@ -314,20 +282,8 @@ formulario.addEventListener('submit', evento => {
     mostrarToast(`✅ Guardado. Tienes ${listaActividades.length} actividades.`);
 
     formulario.reset();
-    ocultarElemento(selectActividad);
-    ocultarElemento(labelActividad);
-    ocultarElemento(textareaDescripcion);
-    ocultarElemento(labelDescripcion);
-
-    // Resetear display de cronómetro al guardar
-    if (cronometroEnMarcha) {
-        cronometroEnMarcha = false;
-        clearInterval(intervaloReloj);
-        btnIniciar.disabled = false;
-        btnDetener.disabled = true;
-    }
-    displayTiempo.textContent = "00:00:00";
-    tiempoTranscurrido = 0;
+    selectActividad.classList.add('oculto'); labelActividad.classList.add('oculto');
+    textareaDescripcion.classList.add('oculto'); labelDescripcion.classList.add('oculto');
 });
 
 botonExportar.addEventListener('click', () => {
@@ -351,9 +307,6 @@ botonExportar.addEventListener('click', () => {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-            .then(registro => {
-                console.log('✅ Service Worker registrado con éxito. App lista para offline.', registro.scope);
-            })
             .catch(error => {
                 console.error('⚠️ Error al registrar el Service Worker:', error);
             });
