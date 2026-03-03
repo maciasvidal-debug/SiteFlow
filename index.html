@@ -4,25 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>App Clínica CTA</title>
-    
+
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0078D4">
-    
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="vistaRegistro" class="vista activa">
+    <div id="vistaRegistro" class="vista activa" role="main" aria-label="Registro de nueva actividad">
         <div class="contenedor">
             <h1 style="margin-top: 0;">Nueva Actividad</h1>
-            
-            <form id="formularioTimesheet">
-                <label>Cronómetro Inteligente:</label>
-                <div class="cronometro-contenedor">
-                    <span id="displayTiempo">00:00:00</span>
+
+            <form id="formularioTimesheet" aria-label="Formulario de registro de tiempo">
+                <label id="cronometroLabel">Cronómetro Inteligente:</label>
+                <div class="cronometro-contenedor" aria-labelledby="cronometroLabel" role="group">
+                    <span id="displayTiempo" aria-live="polite" aria-atomic="true">00:00:00</span>
                     <div class="botones-tiempo">
-                        <button type="button" id="btnIniciar" class="btn-tiempo iniciar">Iniciar</button>
-                        <button type="button" id="btnDetener" class="btn-tiempo detener" disabled>Detener</button>
+                        <button type="button" id="btnIniciar" class="btn-tiempo iniciar" aria-label="Iniciar cronómetro">Iniciar</button>
+                        <button type="button" id="btnDetener" class="btn-tiempo detener" disabled aria-label="Detener cronómetro">Detener</button>
                     </div>
                 </div>
 
@@ -59,40 +59,40 @@
         </div>
     </div>
 
-    <div id="vistaBitacora" class="vista">
-        <div class="contenedor" style="max-width: 600px;">
+    <div id="vistaBitacora" class="vista" role="main" aria-label="Bitácora de actividades registradas">
+        <div class="contenedor" style="max-width: 800px;">
             <h1 style="margin-top: 0;">Bitácora de Actividades</h1>
-            
-            <button type="button" id="btnExportar" style="background-color: #107c41; margin-bottom: 20px;">📥 Exportar todo a Excel (CSV)</button>
 
-            <div style="overflow-x: auto; background: white; border-radius: 8px;">
+            <button type="button" id="btnExportar" style="background-color: #107c41; margin-bottom: 20px;" aria-label="Exportar datos a CSV compatible con Excel y PowerBI">📥 Exportar a Excel/PowerBI (CSV)</button>
+
+            <div class="tabla-contenedor" role="region" aria-label="Tabla de actividades" tabindex="0">
                 <table id="tablaBitacora">
                     <thead>
                         <tr>
-                            <th>Fecha</th>
-                            <th>Protocolo</th>
-                            <th>Categoría</th>
-                            <th>Actividad</th>
-                            <th>Horas</th>
+                            <th scope="col">Fecha</th>
+                            <th scope="col">Protocolo</th>
+                            <th scope="col">Categoría</th>
+                            <th scope="col">Actividad</th>
+                            <th scope="col">Horas</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody aria-live="polite">
                         </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <nav class="barra-navegacion">
-        <button id="navBtnRegistro" class="nav-item activo">
-            <span style="font-size: 20px;">📝</span><br>Registrar
+    <nav class="barra-navegacion" role="navigation" aria-label="Navegación principal">
+        <button id="navBtnRegistro" class="nav-item activo" aria-current="page" aria-label="Ir a la vista de Registro">
+            <span style="font-size: 20px;" aria-hidden="true">📝</span><br>Registrar
         </button>
-        <button id="navBtnBitacora" class="nav-item">
-            <span style="font-size: 20px;">📊</span><br>Bitácora
+        <button id="navBtnBitacora" class="nav-item" aria-label="Ir a la vista de Bitácora">
+            <span style="font-size: 20px;" aria-hidden="true">📊</span><br>Bitácora
         </button>
     </nav>
 
-    <div id="toastContainer"></div>
+    <div id="toastContainer" aria-live="assertive" aria-atomic="true"></div>
 
     <script src="app.js"></script>
 </body>

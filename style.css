@@ -44,26 +44,36 @@ h1 {
 }
 
 /* --- Formularios y Botones --- */
-label { display: block; margin-top: 15px; font-weight: bold; color: #555; font-size: 14px; }
+label { display: block; margin-top: 15px; font-weight: bold; color: #333; font-size: 14px; }
 input, select, textarea {
     width: 100%; padding: 10px; margin-top: 5px;
-    border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px;
+    border: 1px solid #767676; border-radius: 5px; box-sizing: border-box; font-size: 16px;
+    background-color: #fff; color: #333;
+}
+input:focus, select:focus, textarea:focus {
+    outline: 2px solid #005a9e; outline-offset: 2px;
+    border-color: #005a9e;
 }
 button {
-    width: 100%; background-color: #0078D4; color: white; padding: 12px;
-    border: none; border-radius: 5px; margin-top: 20px; font-size: 16px; font-weight: bold; cursor: pointer;
+    width: 100%; background-color: #005a9e; color: white; padding: 12px;
+    border: 2px solid transparent; border-radius: 5px; margin-top: 20px; font-size: 16px; font-weight: bold; cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
 }
-button:hover { background-color: #005a9e; }
+button:hover, button:focus { background-color: #004578; outline: 2px solid #004578; outline-offset: 2px; }
+button:active { transform: scale(0.98); }
 .oculto { display: none !important; }
 
 /* --- Cronómetro --- */
-.cronometro-contenedor { background-color: #e1dfdd; padding: 15px; border-radius: 8px; text-align: center; margin-top: 5px;}
-#displayTiempo { font-size: 32px; font-weight: bold; color: #333; font-family: monospace; display: block; margin-bottom: 10px; }
+.cronometro-contenedor { background-color: #f3f2f1; padding: 15px; border-radius: 8px; text-align: center; margin-top: 5px; border: 1px solid #d2d0ce; }
+#displayTiempo { font-size: 32px; font-weight: bold; color: #201f1e; font-family: monospace; display: block; margin-bottom: 10px; }
 .botones-tiempo { display: flex; gap: 10px; }
 .btn-tiempo { margin-top: 0; }
-.btn-tiempo.iniciar { background-color: #28a745; }
-.btn-tiempo.detener { background-color: #dc3545; }
-.btn-tiempo:disabled { background-color: #ccc; cursor: not-allowed; }
+.btn-tiempo.iniciar { background-color: #107c41; color: white; }
+.btn-tiempo.iniciar:hover, .btn-tiempo.iniciar:focus { background-color: #0c5e31; outline-color: #0c5e31; }
+.btn-tiempo.detener { background-color: #a4262c; color: white; }
+.btn-tiempo.detener:hover, .btn-tiempo.detener:focus { background-color: #8e1f24; outline-color: #8e1f24; }
+.btn-tiempo:disabled { background-color: #c8c6c4; color: #a19f9d; cursor: not-allowed; border-color: transparent; }
+.btn-tiempo:disabled:hover, .btn-tiempo:disabled:focus { outline: none; background-color: #c8c6c4; }
 
 /* --- Barra de Navegación Inferior --- */
 .barra-navegacion {
@@ -103,9 +113,37 @@ table td { padding: 10px; border: 1px solid #ddd; color: #555; }
 table tbody tr:nth-child(even) { background-color: #fafafa; }
 
 /* --- Toasts (Notificaciones) --- */
-#toastContainer { position: fixed; bottom: 80px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1001; }
-.toast { background-color: #333; color: white; padding: 12px 20px; border-radius: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); font-size: 14px; opacity: 1; transition: opacity 0.5s ease-out; }
-.toast.oculto { opacity: 0; }
+#toastContainer {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1001;
+    width: 90%;
+    max-width: 400px;
+    pointer-events: none; /* Permite clickar elementos debajo del contenedor del toast */
+}
+.toast {
+    background-color: #323130;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    opacity: 1;
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+.toast.oculto {
+    opacity: 0;
+    transform: translateY(20px);
+}
 
 /* ========================================== */
 /* DISEÑO RESPONSIVO (Para pantallas grandes) */
