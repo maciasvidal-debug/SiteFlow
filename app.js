@@ -67,176 +67,6 @@ btnNavBitacora.addEventListener('click', () => cambiarVista('bitacora'));
 // ==========================================
 // 3. TOASTS Y CRONÓMETRO
 // ==========================================
-const MILLISECONDS_PER_SECOND = 1000;
-const SECONDS_PER_MINUTE = 60;
-const MINUTES_PER_HOUR = 60;
-const SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR;
-
-function mostrarToast(mensaje) {
-    const contenedor = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = mensaje;
-    contenedor.appendChild(toast);
-    setTimeout(() => { toast.classList.add('oculto'); setTimeout(() => toast.remove(), 500); }, 2500);
-}
-
-let intervaloReloj; let tiempoInicio; let tiempoTranscurrido = 0; let cronometroEnMarcha = false;
-const displayTiempo = document.getElementById('displayTiempo');
-const btnIniciar = document.getElementById('btnIniciar');
-const btnDetener = document.getElementById('btnDetener');
-const inputHoras = document.getElementById('horas');
-
-btnIniciar.addEventListener('click', () => {
-    if (cronometroEnMarcha) return;
-    cronometroEnMarcha = true;
-    tiempoInicio = Date.now() - tiempoTranscurrido;
-    intervaloReloj = setInterval(actualizarReloj, MILLISECONDS_PER_SECOND);
-    btnIniciar.disabled = true; btnDetener.disabled = false;
-    mostrarToast("⏳ Cronómetro iniciado");
-});
-
-btnDetener.addEventListener('click', () => {
-    if (!cronometroEnMarcha) return;
-    cronometroEnMarcha = false;
-    clearInterval(intervaloReloj);
-    btnIniciar.disabled = false; btnDetener.disabled = true;
-    const horasDecimales = (tiempoTranscurrido / (MILLISECONDS_PER_SECOND * SECONDS_PER_HOUR)).toFixed(2);
-    inputHoras.value = horasDecimales;
-    mostrarToast(`⏱️ Tiempo detenido.`);
-    tiempoTranscurrido = 0; displayTiempo.textContent = "00:00:00";
-});
-
-function actualizarReloj() {
-    tiempoTranscurrido = Date.now() - tiempoInicio;
-    let totalSegundos = Math.floor(tiempoTranscurrido / MILLISECONDS_PER_SECOND);
-    let horas = Math.floor(totalSegundos / SECONDS_PER_HOUR);
-    let minutos = Math.floor((totalSegundos % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE);
-    let segundos = totalSegundos % SECONDS_PER_MINUTE;
-    displayTiempo.textContent = String(horas).padStart(2, '0') + ":" + String(minutos).padStart(2, '0') + ":" + String(segundos).padStart(2, '0');
-}
-
-// ==========================================
-// 4. LÓGICA DE FORMULARIO (Cascada)
-// ==========================================
-const selectCategoria = document.getElementById('categoria');
-const selectActividad = document.getElementById('actividadEspecifica');
-const labelActividad = document.getElementById('labelActividad');
-const textareaDescripcion = document.getElementById('descripcion');
-const labelDescripcion = document.getElementById('labelDescripcion');
-
-const opcionesPorCategoria = {
-    monitoreo: [
-        "Visita de Selección (PSV)", 
-        "Visita de Inicio (SIV)", 
-        "Visita de Monitoreo Interino (IMV/RMV)", 
-        "Visita de Cierre (COV)", 
-        "Preparación/Atención de Auditorías o Inspecciones",
-        "Seguimiento de Hallazgos (Action Items)",
-        "Verificación / Revisión de documentos (SDV/SDR)",
-        "Otra"
-    ],
-    documentacion: [
-        "Actualización de TMF / ISF", 
-        "Control de Versiones y Archivo", 
-        "Gestión de Firmas (DOA, FDA 1572)", 
-        "Revisión de Calidad (QC) de Documentos", 
-        "Manejo de Correspondencia del Estudio", 
-        "Preparación de Manuales/Checklists",
-        "Otra"
-    ],
-    entrenamiento: [
-        "Entrenamiento en Protocolo / Enmiendas", 
-        "Entrenamiento en Buenas Prácticas Clínicas (GCP)", 
-        "Entrenamiento en Sistemas (EDC, CTMS, eISF)", 
-        "Inducción (Onboarding) de Equipo", 
-        "Otra"
-    ],
-    reuniones: [
-        "Reunión de Equipo de Estudio (Interna)", 
-        "Reunión con el Sponsor / CRO", 
-        "Reunión de Investigadores (Investigator Meeting)", 
-        "Reunión con el Sitio Clínico / Proveedores", 
-        "Elaboración de Minutas de Reunión",
-        "Otra"
-    ],
-    coordinacion: [
-        "Pre-Screening y Reclutamiento de Pacientes", 
-        "Proceso de Consentimiento Informado (ICF)", 
-        "Visita de Paciente (Screening/Randomización)", 
-        "Visitas de Seguimiento de Paciente", 
-        "Manejo de Muestras Biológicas (Laboratorio/Envío)", 
-        "Manejo de Droga de Estudio (IP Accountability)", 
-        "Evaluación y Reporte de Eventos Adversos (AE/SAE)",
-        "Educación y Retención de Pacientes",
-        "Otra"
-    ],
-    data_entry: [
-        "Ingreso de Datos en eCRF (EDC)", 
-        "Revisión y Resolución de Queries", 
-        "Control de Calidad (QC) de Datos Ingresados", 
-        "Conciliación de Datos (SAEs, Laboratorios)", 
-        "Gestión de Diarios de Pacientes (ePRO/eDiary)", 
-        "Revisión de Source Documents (Documentos Fuente)",
-        "Otra"
-    ],
-    regulatorio: [
-        "Sometimiento Inicial al Comité de Ética (IRB/IEC)", 
-        "Sometimiento de Enmiendas y Renovaciones Anuales", 
-        "Reporte de Seguridad (SAE/SUSAR) al Comité", 
-        "Sometimiento a Agencia Regulatoria", 
-        "Actualización de Documentos de Investigadores (CVs, Licencias)", 
-        "Otra"
-    ]
-};
-
-selectCategoria.addEventListener('change', () => {
-    const cat = selectCategoria.value;
-    selectActividad.innerHTML = '<option value="">-- Selecciona una actividad --</option>';
-    
-    if (cat === "otra") {
-        selectActividad.classList.add('oculto'); labelActividad.classList.add('oculto');
-        textareaDescripcion.classList.remove('oculto'); labelDescripcion.classList.remove('oculto');
-    } else if (cat !== "") {
-        opcionesPorCategoria[cat].forEach(act => {
-            const opt = document.createElement('option'); opt.value = act; opt.textContent = act;
-            selectActividad.appendChild(opt);
-        });
-        selectActividad.classList.remove('oculto'); labelActividad.classList.remove('oculto');
-        textareaDescripcion.classList.add('oculto'); labelDescripcion.classList.add('oculto');
-    } else {
-        selectActividad.classList.add('oculto'); labelActividad.classList.add('oculto');
-        textareaDescripcion.classList.add('oculto'); labelDescripcion.classList.add('oculto');
-    }
-});
-
-selectActividad.addEventListener('change', () => {
-    if (selectActividad.value === "Otra") {
-        textareaDescripcion.classList.remove('oculto'); labelDescripcion.classList.remove('oculto');
-    } else {
-        textareaDescripcion.classList.add('oculto'); labelDescripcion.classList.add('oculto');
-    }
-});
-
-// ==========================================
-// 5. GUARDAR Y EXPORTAR
-// ==========================================
-function escaparCSV(valor) {
-    if (valor === null || valor === undefined) return "";
-    let texto = String(valor);
-
-    // Mitigación de CSV Injection (Formula Injection)
-    if (["=", "+", "-", "@", "\t", "\r"].some(char => texto.startsWith(char))) {
-        texto = "'" + texto;
-    }
-}
-
-btnNavRegistro.addEventListener('click', () => cambiarVista('registro'));
-btnNavBitacora.addEventListener('click', () => cambiarVista('bitacora'));
-
-// ==========================================
-// 3. TOASTS Y CRONÓMETRO
-// ==========================================
 function mostrarToast(mensaje) {
     const contenedor = document.getElementById('toastContainer');
     const toast = document.createElement('div');
@@ -298,7 +128,7 @@ const opcionesPorCategoria = {
         "Visita de Cierre (COV)",
         "Preparación/Atención de Auditorías o Inspecciones",
         "Seguimiento de Hallazgos (Action Items)",
-        "Verificación / Revisión de documentos (SDV/SDR"),
+        "Verificación / Revisión de documentos (SDV/SDR)",
         "Otra"
     ],
     documentacion: [
@@ -411,7 +241,7 @@ function actualizarTablaBitacora() {
         "otra": "Otra"
     };
 
-    const fragmento = document.createDocumentFragment();
+    const fragment = document.createDocumentFragment();
 
     listaActividades.slice().reverse().forEach(actividad => {
         const fila = document.createElement('tr');
@@ -427,10 +257,10 @@ function actualizarTablaBitacora() {
             <td>${actividad.descripcion}</td>
             <td><strong>${actividad.horas}</strong></td>
         `;
-        fragmento.appendChild(fila);
+        fragment.appendChild(fila);
     });
 
-    cuerpoTabla.appendChild(fragmento);
+    cuerpoTabla.appendChild(fragment);
 }
 
 formulario.addEventListener('submit', evento => {
