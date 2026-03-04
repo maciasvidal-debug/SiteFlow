@@ -1,5 +1,5 @@
-// Le damos un nombre a nuestra "memoria caché"
-const NOMBRE_CACHE = 'cta-app-v1';
+// Le damos un nombre a nuestra "memoria caché" (usamos versionado semántico)
+const NOMBRE_CACHE = 'cta-app-v1.0.0';
 
 // Lista de archivos que queremos guardar en el teléfono
 const archivosACachear = [
@@ -21,7 +21,24 @@ self.addEventListener('install', evento => {
     );
 });
 
-// Paso 2: Interceptar las peticiones (Funcionamiento Offline)
+// Paso 2: Activación y Limpieza de Cachés Antiguas
+self.addEventListener('activate', evento => {
+    evento.waitUntil(
+        caches.keys().then(clavesCache => {
+            return Promise.all(
+                clavesCache.map(clave => {
+                    // Si la caché no es la actual, la borramos
+                    if (clave !== NOMBRE_CACHE) {
+                        console.log('Borrando caché antigua:', clave);
+                        return caches.delete(clave);
+                    }
+                })
+            );
+        })
+    );
+});
+
+// Paso 3: Interceptar las peticiones (Funcionamiento Offline)
 self.addEventListener('fetch', evento => {
     evento.respondWith(
         caches.match(evento.request)
@@ -34,4 +51,11 @@ self.addEventListener('fetch', evento => {
                 return fetch(evento.request);
             })
     );
+});
+
+// Escuchar mensaje para forzar la actualización (skipWaiting)
+self.addEventListener('message', evento => {
+    if (evento.data === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });

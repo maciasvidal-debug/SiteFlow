@@ -497,10 +497,50 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js')
             .then(registro => {
                 console.log('✅ Service Worker registrado con éxito. App lista para offline.', registro.scope);
+
+                // Lógica para detectar actualizaciones
+                registro.addEventListener('updatefound', () => {
+                    const nuevoWorker = registro.installing;
+                    if (nuevoWorker == null) {
+                        return;
+                    }
+
+                    nuevoWorker.addEventListener('statechange', () => {
+                        if (nuevoWorker.state === 'installed') {
+                            if (navigator.serviceWorker.controller) {
+                                // Hay una nueva versión lista para activarse
+                                mostrarToastActualizacion(nuevoWorker);
+                            }
+                        }
+                    });
+                });
             })
             .catch(error => {
                 console.error('⚠️ Error al registrar el Service Worker:', error);
             });
     });
 
+    // Escuchar cuando el nuevo Service Worker toma el control y recargar la página
+    let refrescando;
+    if (navigator.serviceWorker && navigator.serviceWorker.addEventListener) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refrescando) return;
+            window.location.reload();
+            refrescando = true;
+        });
+    }
+}
+
+function mostrarToastActualizacion(nuevoWorker) {
+    const updateToast = document.getElementById('updateToast');
+    const btnActualizarApp = document.getElementById('btnActualizarApp');
+
+    if (updateToast && btnActualizarApp) {
+        updateToast.classList.remove('oculto');
+
+        btnActualizarApp.addEventListener('click', () => {
+            // Mandamos el mensaje al nuevo SW para que se active inmediatamente
+            nuevoWorker.postMessage('SKIP_WAITING');
+        });
+    }
 }
