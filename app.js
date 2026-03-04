@@ -264,6 +264,24 @@ selectActividad.addEventListener('change', () => {
 // ==========================================
 // 5. GUARDAR Y EXPORTAR
 // ==========================================
+
+function escaparCSV(valor) {
+    if (valor === null || valor === undefined) return '';
+    let strValor = String(valor);
+
+    // Mitigación de Formula Injection (CSV Injection)
+    if (/^[=+\-@\t\r]/.test(strValor)) {
+        strValor = "'" + strValor;
+    }
+
+    // Escapado estándar de CSV si contiene comas, comillas o saltos de línea
+    if (/[,"\n\r]/.test(strValor)) {
+        strValor = '"' + strValor.replace(/"/g, '""') + '"';
+    }
+
+    return strValor;
+}
+
 const formulario = document.getElementById('formularioTimesheet');
 const botonExportar = document.getElementById('btnExportar');
 const cuerpoTabla = document.querySelector('#tablaBitacora tbody');
@@ -396,7 +414,12 @@ botonExportar.addEventListener('click', () => {
     if (listaActividades.length === 0) { mostrarToast("⚠️ No hay datos para exportar."); return; }
     const filasCSV = ["Fecha,Protocolo,Categoria,Descripcion,Horas"];
     listaActividades.forEach(act => {
-        filasCSV.push(`${act.fecha},${act.protocolo},${act.categoria},${act.descripcion},${act.horas}`);
+        const pFecha = escaparCSV(act.fecha);
+        const pProtocolo = escaparCSV(act.protocolo);
+        const pCategoria = escaparCSV(act.categoria);
+        const pDescripcion = escaparCSV(act.descripcion);
+        const pHoras = escaparCSV(act.horas);
+        filasCSV.push(`${pFecha},${pProtocolo},${pCategoria},${pDescripcion},${pHoras}`);
     });
     const contenidoCSV = filasCSV.join('\n') + '\n';
     const blob = new Blob([contenidoCSV], { type: 'text/csv;charset=utf-8;' });
