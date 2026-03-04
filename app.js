@@ -153,7 +153,9 @@ if (typeof module !== 'undefined' && module.exports) {
         getTiempoTranscurrido: () => tiempoTranscurrido,
         setTiempoInicio: (v) => { tiempoInicio = v; },
         getTiempoInicio: () => tiempoInicio,
-        setCronometroEnMarcha: (v) => { cronometroEnMarcha = v; }
+        setCronometroEnMarcha: (v) => { cronometroEnMarcha = v; },
+        actualizarTablaBitacora: () => { if (typeof actualizarTablaBitacora === 'function') actualizarTablaBitacora(); },
+        setListaActividades: (arr) => { listaActividades = arr; }
     };
 }
 
@@ -290,8 +292,8 @@ function actualizarTablaBitacora() {
     cuerpoTabla.innerHTML = "";
 
     if (listaActividades.length === 0) {
-        // CORRECCIÓN 3: El colspan ahora es 5 porque tenemos 5 columnas
-        cuerpoTabla.innerHTML = "<tr><td colspan='5' style='text-align: center;'>Sin actividades.</td></tr>";
+        // CORRECCIÓN: El colspan ahora es 6 porque tenemos 6 columnas
+        cuerpoTabla.innerHTML = "<tr><td colspan='6' style='text-align: center;'>Sin actividades.</td></tr>";
         return;
     }
 

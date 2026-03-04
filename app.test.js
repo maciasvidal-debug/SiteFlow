@@ -97,3 +97,48 @@ describe('actualizarReloj', () => {
         expect(displayTiempo.textContent).toBe('10:00:00');
     });
 });
+
+describe('actualizarTablaBitacora', () => {
+    let app;
+    let cuerpoTabla;
+
+    beforeEach(() => {
+        // Mock IndexedDB
+        global.indexedDB = {
+            open: jest.fn().mockReturnValue({
+                onupgradeneeded: null,
+                onsuccess: null,
+                onerror: null
+            })
+        };
+
+        // Mock Navigator and Service Worker
+        global.navigator.serviceWorker = {
+            register: jest.fn().mockResolvedValue({})
+        };
+
+        // Set up our document body
+        document.body.innerHTML = html;
+        cuerpoTabla = document.querySelector('#tablaBitacora tbody');
+
+        // Require app.js
+        jest.isolateModules(() => {
+            app = require('./app.js');
+        });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    test('should render empty state message across all 6 columns when listaActividades is empty', () => {
+        // Ensure the list is empty
+        app.setListaActividades([]);
+
+        // Update the table
+        app.actualizarTablaBitacora();
+
+        // Check if the empty state row is rendered correctly
+        expect(cuerpoTabla.innerHTML).toContain("<tr><td colspan=\"6\" style=\"text-align: center;\">Sin actividades.</td></tr>");
+    });
+});
