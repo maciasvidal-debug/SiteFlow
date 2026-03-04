@@ -263,9 +263,71 @@ function actualizarTablaBitacora() {
     cuerpoTabla.appendChild(fragment);
 }
 
+const formulario = document.getElementById('formularioTimesheet');
+const botonExportar = document.getElementById('btnExportar');
+const cuerpoTabla = document.querySelector('#tablaBitacora tbody');
+
+function actualizarTablaBitacora() {
+    cuerpoTabla.innerHTML = "";
+    
+    if (listaActividades.length === 0) {
+        // CORRECCIÓN 3: El colspan ahora es 5 porque tenemos 5 columnas
+        cuerpoTabla.innerHTML = "<tr><td colspan='5' style='text-align: center;'>Sin actividades.</td></tr>";
+        return;
+    }
+
+    // Un pequeño "diccionario" para que la categoría se vea profesional en la tabla
+    const nombresCategorias = {
+        "monitoreo": "Monitoreo",
+        "documentacion": "Documentación / TMF",
+        "entrenamiento": "Entrenamiento",
+        "reuniones": "Reuniones",
+        "coordinacion": "Coordinación Clínica",
+        "data_entry": "Data Entry",
+        "regulatorio": "Regulatorio",
+        "otra": "Otra"
+    };
+
+    const fragmento = document.createDocumentFragment();
+
+    listaActividades.slice().reverse().forEach(actividad => {
+        const fila = document.createElement('tr');
+
+        // Buscamos el nombre bonito de la categoría, si no lo encuentra, usa el original
+        const nombreCategoria = nombresCategorias[actividad.categoria] || actividad.categoria;
+
+        // CORRECCIÓN 4: Insertamos la celda de la categoría en el orden correcto
+        const tdFecha = document.createElement('td');
+        tdFecha.textContent = actividad.fecha;
+        fila.appendChild(tdFecha);
+
+        const tdProtocolo = document.createElement('td');
+        tdProtocolo.textContent = actividad.protocolo || "-";
+        fila.appendChild(tdProtocolo);
+
+        const tdCategoria = document.createElement('td');
+        tdCategoria.textContent = nombreCategoria;
+        fila.appendChild(tdCategoria);
+
+        const tdDescripcion = document.createElement('td');
+        tdDescripcion.textContent = actividad.descripcion;
+        fila.appendChild(tdDescripcion);
+
+        const tdHoras = document.createElement('td');
+        const strongHoras = document.createElement('strong');
+        strongHoras.textContent = actividad.horas;
+        tdHoras.appendChild(strongHoras);
+        fila.appendChild(tdHoras);
+
+        fragmento.appendChild(fila);
+    });
+
+    cuerpoTabla.appendChild(fragmento);
+}
+
 formulario.addEventListener('submit', evento => {
     evento.preventDefault();
-    let descripcionFinal = selectCategoria.value === "otra" || selectActividad.value === "Otra"
+    let descripcionFinal = selectCategoria.value === "otra" || selectActividad.value === "Otra" 
         ? textareaDescripcion.value.replace(/,/g, " ") : selectActividad.value;
 
     const datosActividad = {
@@ -280,7 +342,7 @@ formulario.addEventListener('submit', evento => {
     guardarEnDB(datosActividad);
     actualizarTablaBitacora(); // Actualiza la tabla en segundo plano
     mostrarToast(`✅ Guardado. Tienes ${listaActividades.length} actividades.`);
-
+    
     formulario.reset();
     selectActividad.classList.add('oculto'); labelActividad.classList.add('oculto');
     textareaDescripcion.classList.add('oculto'); labelDescripcion.classList.add('oculto');
@@ -288,10 +350,11 @@ formulario.addEventListener('submit', evento => {
 
 botonExportar.addEventListener('click', () => {
     if (listaActividades.length === 0) { mostrarToast("⚠️ No hay datos para exportar."); return; }
-    let contenidoCSV = "Fecha,Protocolo,Categoria,Descripcion,Horas\n";
-    listaActividades.forEach(act => {
-        contenidoCSV += `${act.fecha},${act.protocolo},${act.categoria},${act.descripcion},${act.horas}\n`;
+    const headers = "Fecha,Protocolo,Categoria,Descripcion,Horas";
+    const rows = listaActividades.map(act => {
+        return `${escaparCSV(act.fecha)},${escaparCSV(act.protocolo)},${escaparCSV(act.categoria)},${escaparCSV(act.descripcion)},${escaparCSV(act.horas)}`;
     });
+    const contenidoCSV = [headers].concat(rows).join("\n") + "\n";
     const blob = new Blob([contenidoCSV], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const enlace = document.createElement("a");
@@ -308,8 +371,9 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
             .catch(error => {
-                console.error('⚠️ Error al registrar el Service Worker:', error);
+                // console.error('⚠️ Error al registrar el Service Worker:', error);
             });
     });
 
 }
+
