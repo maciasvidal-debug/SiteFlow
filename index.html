@@ -116,7 +116,16 @@
         </button>
     </nav>
 
+    <!-- Contenedor general para notificaciones tipo Toast -->
     <div id="toastContainer"></div>
+
+    <!-- Toast específico para actualizaciones de la PWA -->
+    <div id="updateToast" class="update-toast oculto">
+        <div class="update-toast-content">
+            <span>✨ ¡Hay una nueva versión disponible!</span>
+            <button id="btnActualizarApp" class="btn-actualizar">Actualizar ahora</button>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>

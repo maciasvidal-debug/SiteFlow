@@ -108,6 +108,57 @@ table tbody tr:nth-child(even) { background-color: #fafafa; }
 .toast { background-color: #333; color: white; padding: 12px 20px; border-radius: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); font-size: 14px; opacity: 1; transition: opacity 0.5s ease-out; text-align: center; box-sizing: border-box; width: 100%; white-space: pre-line; margin: 0 auto; }
 .toast.oculto { opacity: 0; }
 
+/* Toast de Actualización de App */
+.update-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000;
+    background-color: #0078D4; /* Color corporativo */
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    transition: top 0.5s ease, opacity 0.5s ease;
+    opacity: 1;
+    width: 90%;
+    max-width: 400px;
+}
+.update-toast.oculto {
+    top: -100px; /* Se esconde hacia arriba */
+    opacity: 0;
+    pointer-events: none;
+}
+.update-toast-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    font-size: 14px;
+    font-weight: bold;
+}
+.btn-actualizar {
+    background-color: white;
+    color: #0078D4;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 13px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: background-color 0.2s;
+    margin-top: 0; /* Override default button margin */
+    width: auto;   /* Override default button width */
+}
+.btn-actualizar:hover {
+    background-color: #f0f0f0;
+}
+.btn-actualizar:active {
+    transform: scale(0.98);
+}
+
 /* ========================================== */
 /* DISEÑO RESPONSIVO (Para pantallas grandes) */
 /* ========================================== */
