@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>App Clínica CTA</title>
+    <title>SiteFlow | Clinical Activity Logger</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0078D4">
@@ -11,6 +11,16 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+    <header class="app-header">
+        <div class="header-content">
+            <span class="header-logo">🏥</span>
+            <div class="header-text">
+                <span class="header-title">SiteFlow</span>
+                <span class="header-subtitle">Clinical Activity Logger</span>
+            </div>
+        </div>
+    </header>
 
     <div id="vistaRegistro" class="vista activa">
         <div class="contenedor">
@@ -44,6 +54,8 @@
                     <option value="coordinacion">Coordinación Clínica (CRC)</option>
                     <option value="data_entry">Entrada de Datos (Data Entry)</option>
                     <option value="regulatorio">Regulatorio</option>
+                    <option value="micro_operaciones">Micro-tareas (Operaciones)</option>
+                    <option value="micro_administrativas">Micro-tareas (Administrativas)</option>
                     <option value="otra">Otra (Escribir manualmente)</option>
                 </select>
 
@@ -89,6 +101,11 @@
     <div id="vistaEstadisticas" class="vista">
         <div class="contenedor">
             <h1 style="margin-top: 0;">Estadísticas</h1>
+
+            <div id="insightsContainer" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <!-- Aquí se inyectarán los insights automáticamente -->
+            </div>
+
             <div id="statsResumen" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
                 <div class="stat-card" style="background: #e1f5fe; padding: 15px; border-radius: 8px; text-align: center;">
                     <small>Total Horas</small><br><strong id="statTotalHoras" style="font-size: 1.5em;">0</strong>
@@ -97,9 +114,17 @@
                     <small>Actividades</small><br><strong id="statTotalActividades" style="font-size: 1.5em;">0</strong>
                 </div>
             </div>
-            <div id="chartContenedor" style="background: white; padding: 15px; border-radius: 8px;">
-                <h3>Horas por Categoría</h3>
-                <div id="categoriaStats"></div>
+
+            <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                <div id="chartContenedor" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
+                    <h3 style="margin-top: 0; font-size: 16px;">Horas por Categoría</h3>
+                    <div id="categoriaStats"></div>
+                </div>
+
+                <div id="protocoloContenedor" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
+                    <h3 style="margin-top: 0; font-size: 16px;">Horas por Protocolo</h3>
+                    <div id="protocoloStats"></div>
+                </div>
             </div>
         </div>
     </div>
