@@ -18,20 +18,10 @@ solicitudDB.onsuccess = evento => {
 function cargarDatosGuardados() {
     const transaccion = db.transaction(["actividades"], "readonly");
     const almacen = transaccion.objectStore("actividades");
-
     const solicitud = almacen.getAll();
-    const solicitudKeys = almacen.getAllKeys();
-
     solicitud.onsuccess = () => {
-        const result = solicitud.result;
-        solicitudKeys.onsuccess = () => {
-            const keys = solicitudKeys.result;
-            listaActividades = result.map((act, index) => ({
-                ...act,
-                id: keys[index]
-            }));
-            actualizarTablaBitacora();
-        };
+        listaActividades = solicitud.result;
+        actualizarTablaBitacora(); // Actualizamos la tabla al iniciar
     };
 }
 
