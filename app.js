@@ -76,7 +76,7 @@ function cambiarVista(vistaDestino) {
         actualizarTablaBitacora();
 
         if (listaActividades.length === 0) {
-            mostrarToast("ℹ️ La bitácora está vacía. ¡Registra tu primera actividad!");
+            mostrarToast("ℹ️ La bitácora está vacía.\n¡Registra tu primera actividad!");
         }
     } else if (vistaDestino === 'stats') {
         if (vistaStats) vistaStats.classList.add('activa');

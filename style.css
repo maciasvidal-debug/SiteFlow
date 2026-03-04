@@ -48,6 +48,7 @@ label { display: block; margin-top: 15px; font-weight: bold; color: #555; font-s
 input, select, textarea {
     width: 100%; padding: 10px; margin-top: 5px;
     border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px;
+    font-family: inherit;
 }
 button {
     width: 100%; background-color: #0078D4; color: white; padding: 12px;
@@ -103,8 +104,8 @@ table td { padding: 10px; border: 1px solid #ddd; color: #555; }
 table tbody tr:nth-child(even) { background-color: #fafafa; }
 
 /* --- Toasts (Notificaciones) --- */
-#toastContainer { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 400px; display: flex; flex-direction: column; gap: 10px; z-index: 1001; }
-.toast { background-color: #333; color: white; padding: 12px 20px; border-radius: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); font-size: 14px; opacity: 1; transition: opacity 0.5s ease-out; text-align: center; box-sizing: border-box; width: 100%; }
+#toastContainer { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; z-index: 1001; }
+.toast { background-color: #333; color: white; padding: 12px 20px; border-radius: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); font-size: 14px; opacity: 1; transition: opacity 0.5s ease-out; text-align: center; box-sizing: border-box; width: 100%; white-space: pre-line; margin: 0 auto; }
 .toast.oculto { opacity: 0; }
 
 /* ========================================== */
