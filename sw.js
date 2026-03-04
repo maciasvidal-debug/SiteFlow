@@ -1,5 +1,5 @@
 // Le damos un nombre a nuestra "memoria caché" (usamos versionado semántico)
-const NOMBRE_CACHE = 'cta-app-v1.0.0';
+const NOMBRE_CACHE = 'cta-app-v1.1.0';
 
 // Lista de archivos que queremos guardar en el teléfono
 const archivosACachear = [
