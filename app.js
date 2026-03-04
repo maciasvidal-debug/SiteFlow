@@ -258,22 +258,41 @@ function actualizarTablaBitacora() {
         "otra": "Otra"
     };
 
+    const fragmento = document.createDocumentFragment();
+
     listaActividades.slice().reverse().forEach(actividad => {
         const fila = document.createElement('tr');
-        
+
         // Buscamos el nombre bonito de la categoría, si no lo encuentra, usa el original
         const nombreCategoria = nombresCategorias[actividad.categoria] || actividad.categoria;
 
         // CORRECCIÓN 4: Insertamos la celda de la categoría en el orden correcto
-        fila.innerHTML = `
-            <td>${actividad.fecha}</td>
-            <td>${actividad.protocolo || "-"}</td>
-            <td>${nombreCategoria}</td>
-            <td>${actividad.descripcion}</td>
-            <td><strong>${actividad.horas}</strong></td>
-        `;
-        cuerpoTabla.appendChild(fila);
+        const tdFecha = document.createElement('td');
+        tdFecha.textContent = actividad.fecha;
+        fila.appendChild(tdFecha);
+
+        const tdProtocolo = document.createElement('td');
+        tdProtocolo.textContent = actividad.protocolo || "-";
+        fila.appendChild(tdProtocolo);
+
+        const tdCategoria = document.createElement('td');
+        tdCategoria.textContent = nombreCategoria;
+        fila.appendChild(tdCategoria);
+
+        const tdDescripcion = document.createElement('td');
+        tdDescripcion.textContent = actividad.descripcion;
+        fila.appendChild(tdDescripcion);
+
+        const tdHoras = document.createElement('td');
+        const strongHoras = document.createElement('strong');
+        strongHoras.textContent = actividad.horas;
+        tdHoras.appendChild(strongHoras);
+        fila.appendChild(tdHoras);
+
+        fragmento.appendChild(fila);
     });
+
+    cuerpoTabla.appendChild(fragmento);
 }
 
 formulario.addEventListener('submit', evento => {
@@ -322,7 +341,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
             .catch(error => {
-                console.error('⚠️ Error al registrar el Service Worker:', error);
+                // console.error('⚠️ Error al registrar el Service Worker:', error);
             });
     });
 
