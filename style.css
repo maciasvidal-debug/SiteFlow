@@ -11,6 +11,40 @@ body {
     flex-direction: column;
 }
 
+/* --- Header Persistente --- */
+.app-header {
+    background-color: #0078D4;
+    color: white;
+    padding: 12px 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.header-logo {
+    font-size: 24px;
+}
+.header-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.header-title {
+    font-weight: bold;
+    font-size: 18px;
+    line-height: 1.1;
+}
+.header-subtitle {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
 /* --- Lógica de Pantallas (Vistas) --- */
 .vista {
     display: none; /* Oculta todas las pantallas por defecto */
