@@ -814,7 +814,6 @@ function actualizarEstadisticas() {
     const barraMeta = document.getElementById('barraProgresoMeta');
     const textoMeta = document.getElementById('textoProgresoMeta');
     if (barraMeta && textoMeta) {
-        metaSemanal = parseInt(localStorage.getItem('metaFTE')) || 40;
         const porcentajeMeta = metaSemanal > 0 ? Math.min((horasEstaSemana / metaSemanal) * 100, 100) : 0;
 
         barraMeta.style.width = `${porcentajeMeta}%`;
