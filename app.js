@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (nuevoWorker) {
                 nuevoWorker.postMessage({ action: 'skipWaiting' });
             }
+            document.getElementById('toastActualizacion').hidden = true;
         });
     }
 });
@@ -107,13 +108,15 @@ async function initializeUser(user) {
 
     try {
         // Fetch user profile to get role
-        const { data: profile, error } = await supabase
+        const { data: profile, error } = await supabaseClient
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
 
 
+        if (error) throw error;
+        if (!profile) throw new Error('No se encontró el perfil en la base de datos.');
         State.profile = profile;
 
         mostrarAppPrincipal();
@@ -377,7 +380,7 @@ async function guardarRegistro() {
 
 async function cargarBitacora() {
     try {
-        const { data: entries, error } = await supabase
+        const { data: entries, error } = await supabaseClient
             .from('time_entries')
             .select(`
                 id, date, hours, minutes, total_hours, status,
@@ -496,7 +499,7 @@ async function cargarDashboardEquipo() {
 
     try {
         // Build the query to get subordinates' entries
-        let query = supabase
+        let query = supabaseClient
             .from('time_entries')
             .select(`
                 id, date, total_hours, status, user_id,
@@ -633,7 +636,7 @@ async function aprobarRegistro(id) {
     if (!confirm('¿Estás seguro de aprobar este registro?')) return;
 
     try {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('time_entries')
             .update({ status: 'approved' })
             .eq('id', id);
@@ -679,7 +682,7 @@ document.getElementById('btnSaveQuery').addEventListener('click', async () => {
         if (err1) throw err1;
 
         // 2. Update time_entry status to 'queried'
-        const { error: err2 } = await supabase
+        const { error: err2 } = await supabaseClient
             .from('time_entries')
             .update({ status: 'queried' })
             .eq('id', entryId);

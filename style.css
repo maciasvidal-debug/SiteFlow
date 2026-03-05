@@ -282,3 +282,7 @@ th {
 .bg-warning { background-color: var(--warning-color); }
 .bg-success { background-color: var(--success-color); }
 .bg-error { background-color: var(--error-color); }
+
+.toast-actualizacion[hidden] {
+    display: none !important;
+}
