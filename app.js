@@ -221,7 +221,7 @@ function actualizarPlantillas() {
     plantillasGuardadas.forEach((plantilla, index) => {
         const btn = document.createElement('button');
         btn.className = 'plantilla-btn';
-        btn.innerHTML = `⚡ ${plantilla.nombre}`;
+        btn.textContent = `⚡ ${plantilla.nombre}`;
         btn.onclick = (e) => {
             e.preventDefault();
             aplicarPlantilla(plantilla);
@@ -428,8 +428,10 @@ const cuerpoTabla = document.querySelector('#tablaBitacora tbody');
 
 // Variables de Filtro
 let actividadesFiltradas = [];
+let filtrosActivos = false;
 
 document.getElementById('btnAplicarFiltros').addEventListener('click', () => {
+    filtrosActivos = true;
     actualizarTablaBitacora();
 });
 
@@ -437,6 +439,7 @@ document.getElementById('btnLimpiarFiltros').addEventListener('click', () => {
     document.getElementById('filtroFechaInicio').value = "";
     document.getElementById('filtroFechaFin').value = "";
     document.getElementById('filtroProtocolo').value = "";
+    filtrosActivos = false;
     actualizarTablaBitacora();
 });
 
@@ -636,10 +639,13 @@ function actualizarListaTareas() {
         const btnColor = tarea.estado === 'completado' ? '#6c757d' : '#28a745';
         const btnText = tarea.estado === 'completado' ? 'Deshacer' : 'Completar';
 
+        const escTitulo = escapeHTML(tarea.titulo);
+        const escProtocolo = escapeHTML(tarea.protocolo || 'Sin protocolo');
+
         div.innerHTML = `
             <div class="tarea-info">
-                <div class="tarea-titulo" style="${tarea.estado === 'completado' ? 'text-decoration: line-through;' : ''}">${tarea.titulo}</div>
-                <div class="tarea-meta">${tarea.protocolo || 'Sin protocolo'} • ${tarea.fechaCreacion}</div>
+                <div class="tarea-titulo" style="${tarea.estado === 'completado' ? 'text-decoration: line-through;' : ''}">${escTitulo}</div>
+                <div class="tarea-meta">${escProtocolo} • ${tarea.fechaCreacion}</div>
             </div>
             <div class="tarea-acciones">
                 <button aria-label="${btnText}" onclick="toggleTarea(${tarea.id}, ${index})" style="background-color: ${btnColor}; padding: 6px 10px; font-size: 12px; margin: 0; width: auto;">✔️</button>
@@ -670,7 +676,7 @@ window.eliminarTarea = (id, index) => {
 
 botonExportar.addEventListener('click', () => {
     // Usar actividadesFiltradas en lugar de listaActividades completa para la exportación inteligente
-    const datosAExportar = actividadesFiltradas.length > 0 ? actividadesFiltradas : listaActividades;
+    const datosAExportar = filtrosActivos ? actividadesFiltradas : listaActividades;
 
     if (datosAExportar.length === 0) { mostrarToast("⚠️ No hay datos para exportar."); return; }
 
@@ -697,6 +703,16 @@ botonExportar.addEventListener('click', () => {
 // ==========================================
 // 6. FUNCIONES ADICIONALES
 // ==========================================
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 function actualizarDatalistProtocolos() {
     const datalist = document.getElementById('listaProtocolos');
     if (!datalist) return;
