@@ -45,8 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // SiteFlow v2.0 - Core Application Logic
-const SUPABASE_URL = 'https://belxyalngvqtspagnqwn.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlbHh5YWxuZ3ZxdHNwYWducXduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTI1ODcsImV4cCI6MjA4NjkyODU4N30.ropo__QE6S-uWs1X3umHc3dYoXD-g4B_OFLCm_Kpgjg'; // Legacy anon key for now, could use publishable
+const SUPABASE_URL = 'https://SU_PROYECTO.supabase.co'; // <--- CAMBIAR ESTO
+const SUPABASE_ANON_KEY = 'SU_ANON_KEY'; // <--- CAMBIAR ESTO // Legacy anon key for now, could use publishable
 
 // Initialize Supabase Client
 const supabase = typeof window !== 'undefined' && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
@@ -55,7 +55,7 @@ const supabase = typeof window !== 'undefined' && window.supabase ? window.supab
 document.addEventListener('DOMContentLoaded', () => {
     if (!supabase) {
         const errorDiv = document.getElementById('mensajeErrorLogin');
-        if (errorDiv) errorDiv.textContent = 'Error crítico: No se pudo cargar Supabase. Revise su conexión a internet.';
+        if (errorDiv) errorDiv.textContent = 'Error: Por favor configure las credenciales de su proyecto Supabase en el archivo app.js (SUPABASE_URL y SUPABASE_ANON_KEY).';
         mostrarLogin();
     }
 });
@@ -73,9 +73,16 @@ const State = {
 
 // --- Authentication & Session Management ---
 async function checkSession() {
-    const { data: { session }, error } = await supabase.auth.getSession();
+    if (!supabase) { return mostrarLogin(); }
+    try {
+        const { data: { session }, error } = await supabase.auth.getSession();
     if (error) {
         console.error("Error checking session:", error.message);
+        mostrarLogin();
+        return;
+    }
+    } catch (e) {
+        console.error("Supabase no configurado o falló:", e);
         mostrarLogin();
         return;
     }
