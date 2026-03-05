@@ -45,8 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // SiteFlow v2.0 - Core Application Logic
-const SUPABASE_URL = 'https://SU_PROYECTO.supabase.co'; // <--- CAMBIAR ESTO
-const SUPABASE_ANON_KEY = 'SU_ANON_KEY'; // <--- CAMBIAR ESTO // Legacy anon key for now, could use publishable
+const SUPABASE_URL = 'https://frawcmqosmutjlusnmpx.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyYXdjbXFvc211dGpsdXNubXB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NDMwNjUsImV4cCI6MjA4ODMxOTA2NX0.h9RiAF2BRsyBjwv4OjFqpH6VUbpLdOwgoF9DMPedU00'; // Legacy anon key for now, could use publishable
 
 // Initialize Supabase Client
 const supabase = typeof window !== 'undefined' && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
