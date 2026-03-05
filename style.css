@@ -131,6 +131,55 @@ button:hover { background-color: #005a9e; }
     font-size: 16px;
 }
 
+/* --- Tareas (Action Items) --- */
+.tarea-item {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.tarea-info {
+    flex: 1;
+}
+.tarea-titulo {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+.tarea-meta {
+    font-size: 12px;
+    color: #777;
+}
+.tarea-acciones {
+    display: flex;
+    gap: 8px;
+}
+
+/* --- Plantillas --- */
+.plantilla-btn {
+    background-color: #f1f3f4;
+    border: 1px solid #dadce0;
+    color: #3c4043;
+    border-radius: 16px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-block;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    width: auto;
+    margin-top: 0;
+}
+.plantilla-btn:hover {
+    background-color: #e8eaed;
+}
+
 /* --- Barra de Navegación Inferior --- */
 .barra-navegacion {
     position: fixed;

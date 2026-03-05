@@ -26,6 +26,10 @@
         <div class="contenedor">
             <h1 style="margin-top: 0;">Nueva Actividad</h1>
 
+            <div id="contenedorPlantillas" style="margin-bottom: 20px;">
+                <!-- Botones de plantillas rápidas se inyectarán aquí -->
+            </div>
+
             <form id="formularioTimesheet">
                 <input type="hidden" id="editId" value="">
                 <label>Cronómetro Inteligente:</label>
@@ -77,7 +81,15 @@
                     </div>
                 </div>
 
-                <button type="submit">Guardar Actividad</button>
+                <div style="margin-top: 15px; display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="checkboxActionItem" style="width: auto; margin: 0;">
+                    <label for="checkboxActionItem" style="margin: 0; font-weight: normal; cursor: pointer;">Crear "Action Item" pendiente</label>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" style="flex: 2;">Guardar Actividad</button>
+                    <button type="button" id="btnGuardarPlantilla" style="flex: 1; background-color: #6c757d; font-size: 14px;">⭐ Guardar Plantilla</button>
+                </div>
             </form>
         </div>
     </div>
@@ -86,7 +98,31 @@
         <div class="contenedor" style="max-width: 600px;">
             <h1 style="margin-top: 0;">Bitácora de Actividades</h1>
 
-            <button type="button" id="btnExportar" style="background-color: #107c41; margin-bottom: 20px;">📥 Exportar todo a Excel (CSV)</button>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #dee2e6;">
+                <h3 style="margin-top: 0; font-size: 14px; color: #495057;">Filtros de Búsqueda</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label for="filtroFechaInicio" style="font-size: 12px; margin-top: 0;">Desde:</label>
+                        <input type="date" id="filtroFechaInicio" style="padding: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label for="filtroFechaFin" style="font-size: 12px; margin-top: 0;">Hasta:</label>
+                        <input type="date" id="filtroFechaFin" style="padding: 6px; font-size: 14px;">
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <label for="filtroProtocolo" style="font-size: 12px; margin-top: 0;">Protocolo:</label>
+                        <select id="filtroProtocolo" style="padding: 6px; font-size: 14px;">
+                            <option value="">Todos los Protocolos</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button type="button" id="btnAplicarFiltros" style="margin-top: 0; padding: 8px; font-size: 14px; background-color: #0078D4;">🔍 Aplicar</button>
+                    <button type="button" id="btnLimpiarFiltros" style="margin-top: 0; padding: 8px; font-size: 14px; background-color: #6c757d;">Limpiar</button>
+                </div>
+            </div>
+
+            <button type="button" id="btnExportar" style="background-color: #107c41; margin-bottom: 20px;">📥 Exportar CSV (Filtrado)</button>
 
             <div style="overflow-x: auto; background: white; border-radius: 8px;">
                 <table id="tablaBitacora">
@@ -107,9 +143,36 @@
         </div>
     </div>
 
+    <div id="vistaTareas" class="vista">
+        <div class="contenedor" style="max-width: 600px;">
+            <h1 style="margin-top: 0;">Action Items</h1>
+            <p style="text-align: center; color: #555; font-size: 14px;">Pendientes derivados de tus actividades.</p>
+
+            <div id="listaActionItems" style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Aquí se inyectarán los action items -->
+            </div>
+        </div>
+    </div>
+
     <div id="vistaEstadisticas" class="vista">
         <div class="contenedor">
             <h1 style="margin-top: 0;">Estadísticas</h1>
+
+            <!-- Rastreador de Metas Semanal -->
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; text-align: center;">
+                <h3 style="margin-top: 0; font-size: 16px;">Meta de Horas Semanal</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-size: 14px;">Progreso de esta semana:</span>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <input type="number" id="inputMetaSemanal" style="width: 60px; padding: 4px; font-size: 14px; margin: 0; text-align: right;" value="40" title="Configura tu meta semanal de horas">
+                        <span style="font-size: 14px; color: #555;">horas</span>
+                    </div>
+                </div>
+                <div style="background: #e9ecef; height: 12px; border-radius: 6px; overflow: hidden; position: relative;">
+                    <div id="barraProgresoMeta" style="background: #28a745; width: 0%; height: 100%; transition: width 0.3s ease;"></div>
+                </div>
+                <div style="margin-top: 5px; font-size: 12px; color: #666; text-align: right;" id="textoProgresoMeta">0 / 40 horas</div>
+            </div>
 
             <div id="insightsContainer" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
                 <!-- Aquí se inyectarán los insights automáticamente -->
@@ -144,6 +207,9 @@
         </button>
         <button id="navBtnBitacora" class="nav-item">
             <span style="font-size: 20px;">📊</span><br>Bitácora
+        </button>
+        <button id="navBtnTareas" class="nav-item">
+            <span style="font-size: 20px;">✅</span><br>Tareas
         </button>
         <button id="navBtnStats" class="nav-item">
             <span style="font-size: 20px;">📈</span><br>Stats
