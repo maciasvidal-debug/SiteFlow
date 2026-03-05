@@ -496,13 +496,14 @@ function actualizarTablaBitacora() {
         const escProtocolo = escapeHTML(actividad.protocolo || "-");
         const escCategoria = escapeHTML(nombreCategoriaRaw);
         const escDescripcion = escapeHTML(actividad.descripcion);
+        const escHoras = escapeHTML(actividad.horas);
 
         fila.innerHTML = `
             <td>${escFecha}</td>
             <td>${escProtocolo}</td>
             <td>${escCategoria}</td>
             <td>${escDescripcion}</td>
-            <td><strong>${actividad.horas}</strong></td>
+            <td><strong>${escHoras}</strong></td>
             <td>
                 <button aria-label="Editar actividad" onclick="cargarParaEditar(${actividad.id}, ${indexOriginal})" style="background:none; border:none; cursor:pointer;">✏️</button>
                 <button aria-label="Eliminar actividad" onclick="eliminarRegistro(${actividad.id}, ${indexOriginal})" style="background:none; border:none; cursor:pointer;">🗑️</button>
