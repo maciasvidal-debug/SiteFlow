@@ -458,6 +458,24 @@ document.getElementById('btnLimpiarFiltros').addEventListener('click', () => {
     actualizarTablaBitacora();
 });
 
+/**
+ * Extrae la lógica de filtrado de actividades según los parámetros dados.
+ *
+ * @param {Array} actividades - Lista de actividades a filtrar.
+ * @param {string} fechaInicio - Fecha de inicio en formato YYYY-MM-DD.
+ * @param {string} fechaFin - Fecha de fin en formato YYYY-MM-DD.
+ * @param {string} protocolo - Protocolo a filtrar.
+ * @returns {Array} - Nueva lista con las actividades filtradas.
+ */
+function filtrarActividades(actividades, fechaInicio, fechaFin, protocolo) {
+    return actividades.filter(act => {
+        if (fechaInicio && act.fecha < fechaInicio) return false;
+        if (fechaFin && act.fecha > fechaFin) return false;
+        if (protocolo && act.protocolo !== protocolo) return false;
+        return true;
+    });
+}
+
 function actualizarTablaBitacora() {
     cuerpoTabla.innerHTML = "";
 
@@ -472,13 +490,7 @@ function actualizarTablaBitacora() {
     const fProtocolo = document.getElementById('filtroProtocolo').value;
 
     // Aplicar Filtros
-    actividadesFiltradas = listaActividades.filter(act => {
-        let pasaFiltro = true;
-        if (fInicio && act.fecha < fInicio) pasaFiltro = false;
-        if (fFin && act.fecha > fFin) pasaFiltro = false;
-        if (fProtocolo && act.protocolo !== fProtocolo) pasaFiltro = false;
-        return pasaFiltro;
-    });
+    actividadesFiltradas = filtrarActividades(listaActividades, fInicio, fFin, fProtocolo);
 
     if (actividadesFiltradas.length === 0) {
         cuerpoTabla.innerHTML = "<tr><td colspan='6' style='text-align: center;'>No se encontraron resultados para los filtros aplicados.</td></tr>";
@@ -1003,4 +1015,4 @@ function mostrarToastActualizacion(nuevoWorker) {
     }
 }
 
-if (typeof module !== 'undefined' && module.exports) { module.exports = { escaparCSV, actualizarEstadisticas, actualizarTablaBitacora, actualizarReloj, setListaActividades: (v) => listaActividades = v, setTiempoInicio: (v) => tiempoInicio = v }; }
+if (typeof module !== 'undefined' && module.exports) { module.exports = { escaparCSV, actualizarEstadisticas, actualizarTablaBitacora, actualizarReloj, filtrarActividades, setListaActividades: (v) => listaActividades = v, setTiempoInicio: (v) => tiempoInicio = v }; }
