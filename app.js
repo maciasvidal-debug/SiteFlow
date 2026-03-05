@@ -7,6 +7,20 @@ let listaTareas = [];
 let listaProtocolos = JSON.parse(localStorage.getItem('protocolos')) || [];
 let plantillasGuardadas = JSON.parse(localStorage.getItem('plantillas')) || [];
 
+const NOMBRES_CATEGORIAS = {
+    "monitoreo": "Monitoreo",
+    "documentacion": "Documentación / TMF",
+    "entrenamiento": "Entrenamiento",
+    "reuniones": "Reuniones",
+    "coordinacion": "Coordinación Clínica",
+    "data_entry": "Data Entry",
+    "regulatorio": "Regulatorio",
+    "micro_operaciones": "Micro (Ops)",
+    "micro_administrativas": "Micro (Admin)",
+    "otra": "Otra"
+};
+
+
 const solicitudDB = indexedDB.open("BaseDatosCTA", 2); // Subimos versión a 2
 solicitudDB.onupgradeneeded = evento => {
     db = evento.target.result;
@@ -471,23 +485,10 @@ function actualizarTablaBitacora() {
         return;
     }
 
-    const nombresCategorias = {
-        "monitoreo": "Monitoreo",
-        "documentacion": "Documentación / TMF",
-        "entrenamiento": "Entrenamiento",
-        "reuniones": "Reuniones",
-        "coordinacion": "Coordinación Clínica",
-        "data_entry": "Data Entry",
-        "regulatorio": "Regulatorio",
-        "micro_operaciones": "Micro (Ops)",
-        "micro_administrativas": "Micro (Admin)",
-        "otra": "Otra"
-    };
-
-    const fragment = document.createDocumentFragment();
+const fragment = document.createDocumentFragment();
     actividadesFiltradas.slice().reverse().forEach((actividad) => {
         const fila = document.createElement('tr');
-        const nombreCategoriaRaw = nombresCategorias[actividad.categoria] || actividad.categoria;
+        const nombreCategoriaRaw = NOMBRES_CATEGORIAS[actividad.categoria] || actividad.categoria;
 
         // Sanitización para prevenir XSS
         const escFecha = escapeHTML(actividad.fecha);
@@ -891,20 +892,7 @@ function actualizarEstadisticas() {
         insightsContainer.appendChild(insightsFragment);
     }
 
-    const nombresCategoriasBonitos = {
-        "monitoreo": "Monitoreo",
-        "documentacion": "Doc/TMF",
-        "entrenamiento": "Entrenamiento",
-        "reuniones": "Reuniones",
-        "coordinacion": "Coord. Clínica",
-        "data_entry": "Data Entry",
-        "regulatorio": "Regulatorio",
-        "micro_operaciones": "Micro (Ops)",
-        "micro_administrativas": "Micro (Admin)",
-        "otra": "Otra"
-    };
-
-    // 2. Renderizar Barras por Categoría
+// 2. Renderizar Barras por Categoría
     const catContenedor = document.getElementById('categoriaStats');
     if (catContenedor) {
         catContenedor.innerHTML = "";
@@ -912,7 +900,7 @@ function actualizarEstadisticas() {
         Object.keys(statsPorCategoria).sort((a, b) => statsPorCategoria[b] - statsPorCategoria[a]).forEach(cat => {
             const horas = statsPorCategoria[cat];
             const porcentaje = totalHoras > 0 ? (horas / totalHoras * 100).toFixed(0) : 0;
-            const nombreRaw = nombresCategoriasBonitos[cat] || cat;
+            const nombreRaw = NOMBRES_CATEGORIAS[cat] || cat;
             const nombre = escapeHTML(nombreRaw);
 
             const bar = document.createElement('div');
