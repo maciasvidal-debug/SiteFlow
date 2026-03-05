@@ -789,12 +789,6 @@ function actualizarEstadisticas() {
     domingo.setDate(lunes.getDate() + 6);
     domingo.setHours(23,59,59,999);
 
-    // ⚡ Bolt: Convertimos lunes y domingo a strings YYYY-MM-DD una sola vez
-    // para evitar instanciar Date objects dentro del bucle de listaActividades
-    const pad = (n) => n.toString().padStart(2, '0');
-    const lunesStr = `${lunes.getFullYear()}-${pad(lunes.getMonth() + 1)}-${pad(lunes.getDate())}`;
-    const domingoStr = `${domingo.getFullYear()}-${pad(domingo.getMonth() + 1)}-${pad(domingo.getDate())}`;
-
     let horasEstaSemana = 0;
 
     const statsPorCategoria = {};
@@ -822,9 +816,9 @@ function actualizarEstadisticas() {
             microTareasHoras += horasAct;
         }
 
-        // ⚡ Bolt: Comparación alfanumérica directa (mucho más rápido que new Date() x iteración)
-        // ISO 8601 (YYYY-MM-DD) permite esta comparación segura
-        if (act.fecha >= lunesStr && act.fecha <= domingoStr) {
+        // Calcular horas FTE semanal
+        const fechaAct = new Date(act.fecha + "T12:00:00"); // Medio día para evitar problemas de TZ
+        if (fechaAct >= lunes && fechaAct <= domingo) {
             horasEstaSemana += horasAct;
         }
     });
