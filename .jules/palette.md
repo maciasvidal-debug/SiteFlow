@@ -1,10 +1,3 @@
-## 2024-05-24 - Accessibility improvements for icon-only buttons
-**Learning:** Icon-only buttons (like Edit/Delete emojis) are inherently inaccessible to screen readers.
-**Action:** Always add descriptive `aria-label` attributes to icon-only buttons (e.g., `aria-label="Editar actividad"`, `aria-label="Eliminar actividad"`) to communicate their purpose to assistive technology users. Ensure focus visibility is maintained for keyboard navigation.
-
-## Current Task - Accessibility improvements for 'Action Item' checkboxes and labels
-**Learning:** Standalone checkboxes inside forms without associated labels make it impossible for screen reader users to understand their context or activate them easily by clicking the text.
-**Action:** Wrapped the "Create Action Item" checkbox in a `<label>` element. This natively associates the descriptive text with the input element, dramatically increasing the click target area (UX) and ensuring proper semantic reading for assistive technologies (A11Y).
-
-### Header Logo update
-Added alt text for the new SiteFlow header logo to ensure screen readers correctly announce the application's name and purpose.
+## 2024-05-17 - A11y in Multi-Input Form Groups
+**Learning:** Screen readers struggle to contextualize multi-input form groups (e.g., hours and minutes inputs clustered under a single "Tiempo invertido:" visual label) because standard `<label>` tags only associate with one input ID. Additionally, adjacent decorative text spans (like "h" and "m") create redundant or confusing auditory noise.
+**Action:** Always add explicit `aria-label`s to individual inputs within a multi-input group, and use `aria-hidden="true"` on their adjacent decorative text units to ensure clean, clear screen reader pronunciation.
