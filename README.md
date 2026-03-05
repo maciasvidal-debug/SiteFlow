@@ -1,6 +1,6 @@
-# 🏥 Bitácora Clínica CTA (PWA)
+# 🏥 SiteFlow | Clinical Activity Logger
 
-Una aplicación web progresiva (PWA) diseñada específicamente para agilizar el registro de actividades y horas facturables en el entorno de los Ensayos Clínicos. Creada para Clinical Trial Assistants (CTA), Coordinadores (CRC) y equipos de Data Entry.
+Una aplicación web progresiva (PWA) diseñada específicamente para agilizar el registro de actividades y horas facturables en el entorno de los Ensayos Clínicos. Creada para todo el equipo de operaciones del sitio: Coordinadores (CRC), Clinical Trial Assistants (CTA) y equipos de Data Entry.
 
 ## ✨ Características Principales
 

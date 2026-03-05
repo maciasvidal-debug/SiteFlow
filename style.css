@@ -11,6 +11,40 @@ body {
     flex-direction: column;
 }
 
+/* --- Header Persistente --- */
+.app-header {
+    background-color: #0078D4;
+    color: white;
+    padding: 12px 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.header-logo {
+    font-size: 24px;
+}
+.header-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.header-title {
+    font-weight: bold;
+    font-size: 18px;
+    line-height: 1.1;
+}
+.header-subtitle {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
 /* --- Lógica de Pantallas (Vistas) --- */
 .vista {
     display: none; /* Oculta todas las pantallas por defecto */
@@ -65,6 +99,86 @@ button:hover { background-color: #005a9e; }
 .btn-tiempo.iniciar { background-color: #28a745; }
 .btn-tiempo.detener { background-color: #dc3545; }
 .btn-tiempo:disabled { background-color: #ccc; cursor: not-allowed; }
+
+/* --- Inputs de Tiempo (Horas y Minutos) --- */
+.tiempo-inputs-contenedor {
+    display: flex;
+    gap: 15px;
+    margin-top: 5px;
+}
+.input-grupo {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 0 10px;
+    flex: 1;
+}
+.input-grupo input {
+    border: none;
+    outline: none;
+    margin: 0;
+    padding: 10px 5px;
+    width: 100%;
+    text-align: right;
+    font-size: 16px;
+}
+.input-grupo span {
+    font-weight: bold;
+    color: #555;
+    margin-left: 5px;
+    font-size: 16px;
+}
+
+/* --- Tareas (Action Items) --- */
+.tarea-item {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.tarea-info {
+    flex: 1;
+}
+.tarea-titulo {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+.tarea-meta {
+    font-size: 12px;
+    color: #777;
+}
+.tarea-acciones {
+    display: flex;
+    gap: 8px;
+}
+
+/* --- Plantillas --- */
+.plantilla-btn {
+    background-color: #f1f3f4;
+    border: 1px solid #dadce0;
+    color: #3c4043;
+    border-radius: 16px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-block;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    width: auto;
+    margin-top: 0;
+}
+.plantilla-btn:hover {
+    background-color: #e8eaed;
+}
 
 /* --- Barra de Navegación Inferior --- */
 .barra-navegacion {

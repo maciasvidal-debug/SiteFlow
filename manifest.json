@@ -1,7 +1,7 @@
 {
-  "name": "Bitácora Clínica CTA",
-  "short_name": "Bitácora CTA",
-  "description": "Registro de actividades y horas para Clinical Trial Assistants",
+  "name": "SiteFlow | Clinical Activity Logger",
+  "short_name": "SiteFlow",
+  "description": "Clinical Activity Logger and Time Tracker for Site Operations",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f4f7f6",
