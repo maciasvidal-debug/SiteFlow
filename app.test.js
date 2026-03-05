@@ -142,3 +142,58 @@ describe('actualizarTablaBitacora', () => {
         expect(cuerpoTabla.innerHTML).toContain("<tr><td colspan=\"6\" style=\"text-align: center;\">Sin actividades.</td></tr>");
     });
 });
+
+describe('escaparCSV', () => {
+    let app;
+
+    beforeEach(() => {
+        // Mock IndexedDB
+        global.indexedDB = {
+            open: jest.fn().mockReturnValue({
+                onupgradeneeded: null,
+                onsuccess: null,
+                onerror: null
+            })
+        };
+
+        // Mock Navigator and Service Worker
+        global.navigator.serviceWorker = {
+            register: jest.fn().mockResolvedValue({})
+        };
+
+        // Require app.js
+        jest.isolateModules(() => {
+            app = require('./app.js');
+        });
+    });
+
+    test('should return empty string for null or undefined', () => {
+        expect(app.escaparCSV(null)).toBe('');
+        expect(app.escaparCSV(undefined)).toBe('');
+    });
+
+    test('should return unchanged string for simple alphanumeric values', () => {
+        expect(app.escaparCSV('Hola123')).toBe('Hola123');
+        expect(app.escaparCSV(123)).toBe('123');
+    });
+
+    test('should prefix with single quote for formula injection characters', () => {
+        expect(app.escaparCSV('=SUM(1,2)')).toBe('"\'=SUM(1,2)"'); // Starts with =, contains comma
+        expect(app.escaparCSV('+44')).toBe("'+44");
+        expect(app.escaparCSV('-5')).toBe("'-5");
+        expect(app.escaparCSV('@admin')).toBe("'@admin");
+        expect(app.escaparCSV('\tTab')).toBe("'\tTab");
+        expect(app.escaparCSV('\rReturn')).toBe('"\'\rReturn"'); // Starts with \r, also contains \r (CSV escaping)
+    });
+
+    test('should escape standard CSV special characters with double quotes', () => {
+        expect(app.escaparCSV('Texto, con coma')).toBe('"Texto, con coma"');
+        expect(app.escaparCSV('Texto "con comillas"')).toBe('"Texto ""con comillas"""');
+        expect(app.escaparCSV('Texto con\nsalto de linea')).toBe('"Texto con\nsalto de linea"');
+    });
+
+    test('should handle both CSV injection and standard escaping together', () => {
+        // Starts with '=' and contains a comma
+        expect(app.escaparCSV('=A1+B1,C1')).toBe('"\'=A1+B1,C1"');
+    });
+});

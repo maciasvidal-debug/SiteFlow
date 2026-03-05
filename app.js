@@ -374,7 +374,8 @@ const opcionesPorCategoria = {
 
 selectCategoria.addEventListener('change', () => {
     const cat = selectCategoria.value;
-    selectActividad.innerHTML = '<option value="">-- Selecciona una actividad --</option>';
+    selectActividad.innerHTML = "";
+    selectActividad.appendChild(crearOpcion("", "-- Selecciona una actividad --"));
 
     if (cat === "otra") {
         selectActividad.classList.add('oculto'); labelActividad.classList.add('oculto');
@@ -382,8 +383,7 @@ selectCategoria.addEventListener('change', () => {
     } else if (cat !== "") {
         const fragment = document.createDocumentFragment();
         opcionesPorCategoria[cat].forEach(act => {
-            const opt = document.createElement('option'); opt.value = act; opt.textContent = act;
-            fragment.appendChild(opt);
+            fragment.appendChild(crearOpcion(act, act));
         });
         selectActividad.appendChild(fragment);
         selectActividad.classList.remove('oculto'); labelActividad.classList.remove('oculto');
@@ -492,6 +492,11 @@ function actualizarTablaBitacora() {
         const nombreCategoriaRaw = nombresCategorias[actividad.categoria] || actividad.categoria;
         const nombreCategoria = escapeHTML(nombreCategoriaRaw);
         const escProtocolo = escapeHTML(actividad.protocolo || "-");
+        const escDescripcion = escapeHTML(actividad.descripcion);
+
+        // Sanitización para prevenir XSS
+        const escProtocolo = escapeHTML(actividad.protocolo || "-");
+        const escCategoria = escapeHTML(nombreCategoria);
         const escDescripcion = escapeHTML(actividad.descripcion);
 
         fila.innerHTML = `
@@ -717,27 +722,38 @@ function escapeHTML(str) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
+
+/**
+ * Crea un elemento <option> de forma segura y eficiente.
+ * 🛡️ Sentinel: El uso de .textContent previene ataques XSS al tratar el texto como contenido literal.
+ */
+function crearOpcion(valor, texto) {
+    const opt = document.createElement('option');
+    opt.value = valor;
+    opt.textContent = texto || valor;
+    return opt;
+}
+
 function actualizarDatalistProtocolos() {
     const datalist = document.getElementById('listaProtocolos');
     if (!datalist) return;
     datalist.innerHTML = "";
     const fragment = document.createDocumentFragment();
     listaProtocolos.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p;
-        fragment.appendChild(opt);
+        fragment.appendChild(crearOpcion(p));
     });
     datalist.appendChild(fragment);
 
     // Actualizar también el filtro de protocolos
     const selectFiltro = document.getElementById('filtroProtocolo');
     if (selectFiltro) {
-        selectFiltro.innerHTML = '<option value="">Todos los Protocolos</option>';
+        selectFiltro.innerHTML = "";
+        const fragmentFiltro = document.createDocumentFragment();
+        fragmentFiltro.appendChild(crearOpcion("", "Todos los Protocolos"));
         listaProtocolos.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p; opt.textContent = p;
-            selectFiltro.appendChild(opt);
+            fragmentFiltro.appendChild(crearOpcion(p, p));
         });
+        selectFiltro.appendChild(fragmentFiltro);
     }
 }
 actualizarDatalistProtocolos();
@@ -812,7 +828,6 @@ function actualizarEstadisticas() {
     const barraMeta = document.getElementById('barraProgresoMeta');
     const textoMeta = document.getElementById('textoProgresoMeta');
     if (barraMeta && textoMeta) {
-        metaSemanal = parseInt(localStorage.getItem('metaFTE')) || 40;
         const porcentajeMeta = metaSemanal > 0 ? Math.min((horasEstaSemana / metaSemanal) * 100, 100) : 0;
 
         barraMeta.style.width = `${porcentajeMeta}%`;
@@ -925,6 +940,8 @@ function actualizarEstadisticas() {
 
             const bar = document.createElement('div');
             bar.style.marginBottom = "10px";
+            // Sanitización para prevenir XSS
+            const escProt = escapeHTML(prot);
             bar.innerHTML = `
                 <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 4px;">
                     <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%;">${escProt}</span>
