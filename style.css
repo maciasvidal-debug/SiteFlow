@@ -38,7 +38,7 @@ body {
     flex: 1; /* Toma todo el espacio sobrante arriba de la barra de navegación */
     overflow-y: auto; /* Permite hacer scroll SOLO dentro de la pantalla activa */
     padding: 20px;
-    padding-bottom: 90px; /* Deja espacio para que la barra inferior no tape el contenido */
+    padding-bottom: 120px; /* Deja espacio para que la barra inferior no tape el contenido */
 }
 
 /* Solo la pantalla que tenga la clase 'activa' se mostrará */
@@ -54,7 +54,7 @@ body {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     width: 100%;
     max-width: 400px;
-    margin: 0 auto; /* Centra la caja en pantallas grandes */
+    margin: 0 auto 20px auto; /* Centra la caja en pantallas grandes */
     box-sizing: border-box;
 }
 
@@ -212,7 +212,7 @@ table tbody tr:nth-child(even) { background-color: #fafafa; }
 
 /* --- Toasts (Notificaciones) --- */
 #toastContainer { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; z-index: 1001; }
-.toast { background-color: #333; color: white; padding: 12px 20px; border-radius: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); font-size: 14px; opacity: 1; transition: opacity 0.5s ease-out; text-align: center; box-sizing: border-box; width: 100%; white-space: pre-line; margin: 0 auto; }
+.toast { background-color: #333; color: white; padding: 12px 20px; border-radius: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); font-size: 14px; opacity: 1; transition: opacity 0.5s ease-out; text-align: center; box-sizing: border-box; width: 100%; white-space: pre-line; margin: 0 auto 20px auto; }
 .toast.oculto { opacity: 0; }
 
 /* Toast de Actualización de App */
