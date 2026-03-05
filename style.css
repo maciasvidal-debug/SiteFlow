@@ -171,7 +171,8 @@ button:hover { background-color: #005a9e; }
     bottom: 0;
     left: 0;
     width: 100%;
-    background-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    background-color: white;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
     display: flex;
     justify-content: space-around;
     padding: 10px 0;
@@ -261,13 +262,36 @@ table tbody tr:nth-child(even) { background-color: #fafafa; }
 
 @media (min-width: 768px) {
 
+
+    .app-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 200px; /* Fixed width for the logo area */
+        height: 60px; /* Match nav bar height */
+        background-color: transparent;
+        box-shadow: none;
+        z-index: 1001; /* Above nav bar */
+        justify-content: flex-start;
+        padding-left: 20px;
+    }
+
+    .header-logo-img {
+        max-height: 40px; /* Slightly smaller to fit nav bar */
+    }
+
     .barra-navegacion {
         top: 0;
         bottom: auto;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         justify-content: center;
         gap: 50px;
+        padding-left: 200px;
+        box-sizing: border-box; /* Push buttons to the right to make room for logo */
+        background-color: rgba(255, 255, 255, 0.95); /* Ensure professional semi-transparent white */
+        backdrop-filter: blur(10px); /* Modern glassmorphism if supported */
     }
+
 
     body {
         padding-top: 80px;
