@@ -492,12 +492,13 @@ function actualizarTablaBitacora() {
         const nombreCategoriaRaw = nombresCategorias[actividad.categoria] || actividad.categoria;
 
         // Sanitización para prevenir XSS
+        const escFecha = escapeHTML(actividad.fecha);
         const escProtocolo = escapeHTML(actividad.protocolo || "-");
         const escCategoria = escapeHTML(nombreCategoriaRaw);
         const escDescripcion = escapeHTML(actividad.descripcion);
 
         fila.innerHTML = `
-            <td>${actividad.fecha}</td>
+            <td>${escFecha}</td>
             <td>${escProtocolo}</td>
             <td>${escCategoria}</td>
             <td>${escDescripcion}</td>
@@ -647,11 +648,12 @@ function actualizarListaTareas() {
 
         const escTitulo = escapeHTML(tarea.titulo);
         const escProtocolo = escapeHTML(tarea.protocolo || 'Sin protocolo');
+        const escFechaCreacion = escapeHTML(tarea.fechaCreacion);
 
         div.innerHTML = `
             <div class="tarea-info">
                 <div class="tarea-titulo" style="${tarea.estado === 'completado' ? 'text-decoration: line-through;' : ''}">${escTitulo}</div>
-                <div class="tarea-meta">${escProtocolo} • ${tarea.fechaCreacion}</div>
+                <div class="tarea-meta">${escProtocolo} • ${escFechaCreacion}</div>
             </div>
             <div class="tarea-acciones">
                 <button aria-label="${btnText}" onclick="toggleTarea(${tarea.id}, ${index})" style="background-color: ${btnColor}; padding: 6px 10px; font-size: 12px; margin: 0; width: auto;">✔️</button>
