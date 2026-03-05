@@ -3,223 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="SiteFlow | Clinical Activity Logger - Registro de actividades de ensayos clínicos">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="manifest" href="manifest.json">
     <title>SiteFlow | Clinical Activity Logger</title>
 
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0078D4">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- App update notification -->
+    <div id="toastActualizacion" class="toast-actualizacion" aria-live="polite" hidden>
+        Nueva versión disponible
+        <button id="btnActualizarApp" class="btn-actualizar">Actualizar</button>
+    </div>
 
-    <header class="app-header">
-        <div class="header-content">
-            <img src="siteflow-logo.png" alt="SiteFlow - Clinical Activity Logger" class="header-logo-img">
-        </div>
-    </header>
-
-    <div id="vistaRegistro" class="vista activa">
-        <div class="contenedor">
-            <h1 style="margin-top: 0; font-size: 1.5rem; line-height: 1.3; margin-bottom: 20px;">Hola. Vamos a registrar una nueva actividad.</h1>
-
-            <div id="contenedorPlantillas" style="margin-bottom: 20px;">
-                <!-- Botones de plantillas rápidas se inyectarán aquí -->
+    <!-- Login Screen -->
+    <div id="pantallaLogin" class="container" style="display: none;">
+        <header>
+            <div class="logo-container">
+                <img src="siteflow-logo.png" alt="SiteFlow Logo" class="logo-img" id="logoPrincipal">
             </div>
-
-            <form id="formularioTimesheet">
-                <input type="hidden" id="editId" value="">
-                <label>Cronómetro Inteligente:</label>
-                <div class="cronometro-contenedor">
-                    <span id="displayTiempo">00:00:00</span>
-                    <div class="botones-tiempo">
-                        <button type="button" id="btnIniciar" class="btn-tiempo iniciar">Iniciar</button>
-                        <button type="button" id="btnDetener" class="btn-tiempo detener" disabled>Detener</button>
-                    </div>
+            <h1>Iniciar Sesión</h1>
+        </header>
+        <main>
+            <form id="formularioLogin">
+                <div class="form-group">
+                    <label for="inputEmail">Correo Electrónico:</label>
+                    <input type="email" id="inputEmail" required>
                 </div>
-
-                <label for="fecha">Fecha (Obligatorio):</label>
-                <input type="date" id="fecha" required>
-
-                <label for="protocolo">Código de Protocolo:</label>
-                <input type="text" id="protocolo" placeholder="Ej. PROT-2026" list="listaProtocolos">
-                <datalist id="listaProtocolos"></datalist>
-
-                <label for="categoria">Categoría de la Actividad:</label>
-                <select id="categoria" required>
-                    <option value="">-- Selecciona una categoría --</option>
-                    <option value="monitoreo">Monitoreo</option>
-                    <option value="documentacion">Documentación / TMF</option>
-                    <option value="entrenamiento">Entrenamiento</option>
-                    <option value="reuniones">Reuniones</option>
-                    <option value="coordinacion">Coordinación Clínica (CRC)</option>
-                    <option value="data_entry">Entrada de Datos (Data Entry)</option>
-                    <option value="regulatorio">Regulatorio</option>
-                    <option value="micro_operaciones">Micro-tareas (Operaciones)</option>
-                    <option value="micro_administrativas">Micro-tareas (Administrativas)</option>
-                    <option value="otra">Otra (Escribir manualmente)</option>
-                </select>
-
-                <label for="actividadEspecifica" id="labelActividad" class="oculto">Actividad Específica:</label>
-                <select id="actividadEspecifica" class="oculto"></select>
-
-                <label for="descripcion" id="labelDescripcion" class="oculto">Descripción de la actividad (Detalles):</label>
-                <textarea id="descripcion" class="oculto" rows="3" placeholder="Detalla tu actividad aquí..."></textarea>
-
-                <label>Tiempo invertido:</label>
-                <div class="tiempo-inputs-contenedor">
-                    <div class="input-grupo">
-                        <input type="number" id="inputHoras" min="0" step="1" placeholder="0" aria-label="Horas">
-                        <span aria-hidden="true">h</span>
-                    </div>
-                    <div class="input-grupo">
-                        <input type="number" id="inputMinutos" min="0" max="59" step="1" placeholder="0" aria-label="Minutos">
-                        <span aria-hidden="true">m</span>
-                    </div>
+                <div class="form-group">
+                    <label for="inputPassword">Contraseña:</label>
+                    <input type="password" id="inputPassword" required>
                 </div>
-
-                <div style="margin-top: 15px; display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" id="checkboxActionItem" style="width: auto; margin: 0;">
-                    <label for="checkboxActionItem" style="margin: 0; font-weight: normal; cursor: pointer;">Crear "Action Item" pendiente</label>
-                </div>
-
-                <div style="display: flex; gap: 10px;">
-                    <button type="submit" style="flex: 2;">Guardar Actividad</button>
-                    <button type="button" id="btnGuardarPlantilla" style="flex: 1; background-color: #6c757d; font-size: 14px;">⭐ Guardar Plantilla</button>
-                </div>
+                <div id="mensajeErrorLogin" class="mensaje-error" aria-live="assertive"></div>
+                <button type="submit" class="btn-principal" id="btnIniciarSesion">Ingresar</button>
             </form>
-        </div>
+        </main>
     </div>
 
-    <div id="vistaBitacora" class="vista">
-        <div class="contenedor" style="max-width: 600px;">
-            <h1 style="margin-top: 0;">Bitácora de Actividades</h1>
-
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #dee2e6;">
-                <h3 style="margin-top: 0; font-size: 14px; color: #495057;">Filtros de Búsqueda</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div>
-                        <label for="filtroFechaInicio" style="font-size: 12px; margin-top: 0;">Desde:</label>
-                        <input type="date" id="filtroFechaInicio" style="padding: 6px; font-size: 14px;">
-                    </div>
-                    <div>
-                        <label for="filtroFechaFin" style="font-size: 12px; margin-top: 0;">Hasta:</label>
-                        <input type="date" id="filtroFechaFin" style="padding: 6px; font-size: 14px;">
-                    </div>
-                    <div style="grid-column: span 2;">
-                        <label for="filtroProtocolo" style="font-size: 12px; margin-top: 0;">Protocolo:</label>
-                        <select id="filtroProtocolo" style="padding: 6px; font-size: 14px;">
-                            <option value="">Todos los Protocolos</option>
-                        </select>
-                    </div>
+    <!-- Main Application Screen -->
+    <div id="pantallaPrincipal" class="container" style="display: none;">
+        <header>
+            <div class="header-top">
+                <div class="logo-container">
+                    <img src="siteflow-logo.png" alt="SiteFlow Logo" class="logo-img" id="logoApp">
                 </div>
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button type="button" id="btnAplicarFiltros" style="margin-top: 0; padding: 8px; font-size: 14px; background-color: #0078D4;">🔍 Aplicar</button>
-                    <button type="button" id="btnLimpiarFiltros" style="margin-top: 0; padding: 8px; font-size: 14px; background-color: #6c757d;">Limpiar</button>
+                <div class="user-info">
+                    <span id="userEmailDisplay"></span>
+                    <button id="btnCerrarSesion" class="btn-secundario">Salir</button>
                 </div>
             </div>
+            <h1>SiteFlow <span class="badge-version">v2.0</span></h1>
 
-            <button type="button" id="btnExportar" style="background-color: #107c41; margin-bottom: 20px;">📥 Exportar CSV (Filtrado)</button>
+            <!-- Navigation specifically for polymorphic roles -->
+            <nav id="navMenu" class="nav-menu" style="display: none;">
+                <button class="nav-btn active" data-target="vistaRegistro">Registro</button>
+                <button class="nav-btn" data-target="vistaDashboard" id="btnNavDashboard" style="display: none;">Dashboard Equipo</button>
+                <button class="nav-btn" data-target="vistaCatalogos" id="btnNavCatalogos" style="display: none;">Catálogos</button>
+            </nav>
+        </header>
 
-            <div style="overflow-x: auto; background: white; border-radius: 8px;">
-                <table id="tablaBitacora">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Protocolo</th>
-                            <th>Categoría</th>
-                            <th>Actividad</th>
-                            <th>Horas</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+        <main>
+            <!-- View: Registration (Staff, Managers, Admins) -->
+            <section id="vistaRegistro" class="vista active">
+                <!-- Stats Banner -->
+                <div id="bannerEstadisticas" class="stats-banner" aria-live="polite">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Horas hoy:</span>
+                        <span id="totalHorasDia" class="stat-value">0</span>
+                    </div>
+                </div>
+
+                <form id="formularioBitacora" aria-label="Formulario de registro de actividades">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="inputFecha">Fecha:</label>
+                            <input type="date" id="inputFecha" required aria-required="true">
+                        </div>
+                        <div class="form-group">
+                            <label for="inputProtocolo">Protocolo:</label>
+                            <select id="inputProtocolo" required aria-required="true">
+                                <option value="" disabled selected>Seleccione protocolo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="selectCategoria">Categoría:</label>
+                            <select id="selectCategoria" required aria-required="true">
+                                <option value="" disabled selected>Seleccione categoría</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="selectActividad">Actividad:</label>
+                            <select id="selectActividad" required aria-required="true" disabled>
+                                <option value="" disabled selected>Seleccione actividad</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row tiempo-input-group">
+                        <div class="form-group">
+                            <label for="inputHoras">Horas:</label>
+                            <input type="number" id="inputHoras" min="0" max="24" value="0" required aria-required="true">
+                        </div>
+                        <div class="form-group">
+                            <label for="inputMinutos">Minutos:</label>
+                            <input type="number" id="inputMinutos" min="0" max="59" value="0" required aria-required="true">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-principal" id="btnGuardar">Guardar Actividad</button>
+                    <input type="hidden" id="inputIdEdicion" value="">
+                </form>
+
+                <div class="acciones-tabla">
+                    <button id="btnLimpiarLocal" class="btn-secundario btn-peligro">Limpiar Filtros</button>
+                </div>
+
+                <div class="table-container">
+                    <table id="tablaBitacora" aria-label="Tabla de actividades registradas">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Protocolo</th>
+                                <th>Categoría</th>
+                                <th>Actividad</th>
+                                <th>Tiempo</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTabla">
+                            <!-- Los registros se llenarán mediante JavaScript -->
                         </tbody>
-                </table>
-            </div>
-        </div>
+                    </table>
+                </div>
+            </section>
+
+            <!-- View: Team Dashboard (Managers, Admins) -->
+            <section id="vistaDashboard" class="vista" style="display: none;">
+                <h2>Dashboard de Equipo</h2>
+                <div id="dashboardStats" class="dashboard-grid">
+                    <!-- Stats will be loaded here -->
+                </div>
+
+                <h3>Auditoría de Registros</h3>
+                <div class="table-container">
+                    <table id="tablaAuditoria" aria-label="Tabla de auditoría de equipo">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Fecha</th>
+                                <th>Actividad</th>
+                                <th>Tiempo</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaAuditoria">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- View: Catalogs (Managers, Admins) -->
+            <section id="vistaCatalogos" class="vista" style="display: none;">
+                <h2>Gestión de Catálogos</h2>
+                <!-- Catalog Management UI will be here -->
+                <p>Módulo de catálogos en desarrollo...</p>
+            </section>
+        </main>
     </div>
 
-    <div id="vistaTareas" class="vista">
-        <div class="contenedor" style="max-width: 600px;">
-            <h1 style="margin-top: 0;">Action Items</h1>
-            <p style="text-align: center; color: #555; font-size: 14px;">Pendientes derivados de tus actividades.</p>
-
-            <div id="listaActionItems" style="display: flex; flex-direction: column; gap: 10px;">
-                <!-- Aquí se inyectarán los action items -->
+    <!-- Modal for Edit/Query Action -->
+    <div id="modalQuery" class="modal" hidden>
+        <div class="modal-content">
+            <h3 id="modalQueryTitle">Generar Observación (Query)</h3>
+            <textarea id="inputQueryText" rows="4" style="width: 100%; margin-top: 10px;" placeholder="Escribe el motivo del rechazo u observación..."></textarea>
+            <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button id="btnCancelQuery" class="btn-secundario">Cancelar</button>
+                <button id="btnSaveQuery" class="btn-principal">Guardar Query</button>
             </div>
-        </div>
-    </div>
-
-    <div id="vistaEstadisticas" class="vista">
-        <div class="contenedor">
-            <h1 style="margin-top: 0;">Estadísticas</h1>
-
-            <!-- Rastreador de Metas Semanal -->
-            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; text-align: center;">
-                <h3 style="margin-top: 0; font-size: 16px;">Meta de Horas Semanal</h3>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <span style="font-size: 14px;">Progreso de esta semana:</span>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <input type="number" id="inputMetaSemanal" style="width: 60px; padding: 4px; font-size: 14px; margin: 0; text-align: right;" value="40" title="Configura tu meta semanal de horas">
-                        <span style="font-size: 14px; color: #555;">horas</span>
-                    </div>
-                </div>
-                <div style="background: #e9ecef; height: 12px; border-radius: 6px; overflow: hidden; position: relative;">
-                    <div id="barraProgresoMeta" style="background: #28a745; width: 0%; height: 100%; transition: width 0.3s ease;"></div>
-                </div>
-                <div style="margin-top: 5px; font-size: 12px; color: #666; text-align: right;" id="textoProgresoMeta">0 / 40 horas</div>
-            </div>
-
-            <div id="insightsContainer" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
-                <!-- Aquí se inyectarán los insights automáticamente -->
-            </div>
-
-            <div id="statsResumen" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-                <div class="stat-card" style="background: #e1f5fe; padding: 15px; border-radius: 8px; text-align: center;">
-                    <small>Total Horas</small><br><strong id="statTotalHoras" style="font-size: 1.5em;">0</strong>
-                </div>
-                <div class="stat-card" style="background: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center;">
-                    <small>Actividades</small><br><strong id="statTotalActividades" style="font-size: 1.5em;">0</strong>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
-                <div id="chartContenedor" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
-                    <h3 style="margin-top: 0; font-size: 16px;">Horas por Categoría</h3>
-                    <div id="categoriaStats"></div>
-                </div>
-
-                <div id="protocoloContenedor" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
-                    <h3 style="margin-top: 0; font-size: 16px;">Horas por Protocolo</h3>
-                    <div id="protocoloStats"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <nav class="barra-navegacion">
-        <button id="navBtnRegistro" class="nav-item activo">
-            <span style="font-size: 20px;">📝</span><br>Registrar
-        </button>
-        <button id="navBtnBitacora" class="nav-item">
-            <span style="font-size: 20px;">📊</span><br>Bitácora
-        </button>
-        <button id="navBtnTareas" class="nav-item">
-            <span style="font-size: 20px;">✅</span><br>Tareas
-        </button>
-        <button id="navBtnStats" class="nav-item">
-            <span style="font-size: 20px;">📈</span><br>Stats
-        </button>
-    </nav>
-
-    <!-- Contenedor general para notificaciones tipo Toast -->
-    <div id="toastContainer"></div>
-
-    <!-- Toast específico para actualizaciones de la PWA -->
-    <div id="updateToast" class="update-toast oculto">
-        <div class="update-toast-content">
-            <span>✨ ¡Hay una nueva versión disponible!</span>
-            <button id="btnActualizarApp" class="btn-actualizar">Actualizar ahora</button>
+            <input type="hidden" id="hiddenEntryIdForQuery">
         </div>
     </div>
 

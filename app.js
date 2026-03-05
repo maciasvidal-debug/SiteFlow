@@ -1,1066 +1,764 @@
-// ==========================================
-// 1. BASE DE DATOS (IndexedDB)
-// ==========================================
-let db;
-let listaActividades = [];
-let listaTareas = [];
-let listaProtocolos = JSON.parse(localStorage.getItem('protocolos')) || [];
-let plantillasGuardadas = JSON.parse(localStorage.getItem('plantillas')) || [];
+// SiteFlow v2.0 - Core Application Logic
+const SUPABASE_URL = 'https://belxyalngvqtspagnqwn.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlbHh5YWxuZ3ZxdHNwYWducXduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTI1ODcsImV4cCI6MjA4NjkyODU4N30.ropo__QE6S-uWs1X3umHc3dYoXD-g4B_OFLCm_Kpgjg'; // Legacy anon key for now, could use publishable
 
-const NOMBRES_CATEGORIAS = {
-    "monitoreo": "Monitoreo",
-    "documentacion": "Documentación / TMF",
-    "entrenamiento": "Entrenamiento",
-    "reuniones": "Reuniones",
-    "coordinacion": "Coordinación Clínica",
-    "data_entry": "Data Entry",
-    "regulatorio": "Regulatorio",
-    "micro_operaciones": "Micro (Ops)",
-    "micro_administrativas": "Micro (Admin)",
-    "otra": "Otra"
+// Initialize Supabase Client
+const supabase = typeof window !== 'undefined' && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+// State Management
+const State = {
+    user: null,
+    profile: null,
+    protocols: [],
+    categories: [],
+    activities: [],
+    timeEntries: [],
+    currentView: 'vistaRegistro'
 };
 
-
-const solicitudDB = indexedDB.open("BaseDatosCTA", 2); // Subimos versión a 2
-solicitudDB.onupgradeneeded = evento => {
-    db = evento.target.result;
-    if (!db.objectStoreNames.contains("actividades")) {
-        db.createObjectStore("actividades", { autoIncrement: true });
-    }
-    if (!db.objectStoreNames.contains("tareas")) {
-        db.createObjectStore("tareas", { autoIncrement: true });
-    }
-};
-solicitudDB.onsuccess = evento => {
-    db = evento.target.result;
-    cargarDatosGuardados();
-    cargarTareasGuardadas();
-};
-
-function cargarDatosGuardados() {
-    const transaccion = db.transaction(["actividades"], "readonly");
-    const almacen = transaccion.objectStore("actividades");
-    const solicitud = almacen.getAll();
-    solicitud.onsuccess = () => {
-        listaActividades = solicitud.result;
-        actualizarTablaBitacora(); // Actualizamos la tabla al iniciar
-        actualizarEstadisticas(); // Actualizamos meta FTE al iniciar
-    };
-}
-
-function cargarTareasGuardadas() {
-    if (!db.objectStoreNames.contains("tareas")) return;
-    const transaccion = db.transaction(["tareas"], "readonly");
-    const almacen = transaccion.objectStore("tareas");
-    const solicitud = almacen.getAll();
-    solicitud.onsuccess = () => {
-        listaTareas = solicitud.result;
-        actualizarListaTareas();
-    };
-}
-
-function guardarEnDB(actividad) {
-    const transaccion = db.transaction(["actividades"], "readwrite");
-    const almacen = transaccion.objectStore("actividades");
-    const solicitud = almacen.add(actividad);
-    solicitud.onsuccess = (evento) => {
-        actividad.id = evento.target.result;
-    };
-}
-
-function eliminarDeDB(id) {
-    const transaccion = db.transaction(["actividades"], "readwrite");
-    const almacen = transaccion.objectStore("actividades");
-    almacen.delete(id);
-}
-
-function actualizarEnDB(id, actividad) {
-    const transaccion = db.transaction(["actividades"], "readwrite");
-    const almacen = transaccion.objectStore("actividades");
-    almacen.put(actividad, id);
-}
-
-function guardarTareaEnDB(tarea) {
-    const transaccion = db.transaction(["tareas"], "readwrite");
-    const almacen = transaccion.objectStore("tareas");
-    const solicitud = almacen.add(tarea);
-    solicitud.onsuccess = (evento) => {
-        tarea.id = evento.target.result;
-    };
-}
-
-function actualizarTareaEnDB(id, tarea) {
-    const transaccion = db.transaction(["tareas"], "readwrite");
-    const almacen = transaccion.objectStore("tareas");
-    almacen.put(tarea, id);
-}
-
-function eliminarTareaDeDB(id) {
-    const transaccion = db.transaction(["tareas"], "readwrite");
-    const almacen = transaccion.objectStore("tareas");
-    almacen.delete(id);
-}
-
-// ==========================================
-// 2. NAVEGACIÓN INFERIOR (Cambio de pantallas)
-// ==========================================
-const btnNavRegistro = document.getElementById('navBtnRegistro');
-const btnNavBitacora = document.getElementById('navBtnBitacora');
-const btnNavTareas = document.getElementById('navBtnTareas');
-const btnNavStats = document.getElementById('navBtnStats');
-const vistaRegistro = document.getElementById('vistaRegistro');
-const vistaBitacora = document.getElementById('vistaBitacora');
-const vistaTareas = document.getElementById('vistaTareas');
-const vistaStats = document.getElementById('vistaEstadisticas');
-
-function cambiarVista(vistaDestino) {
-    // Apagamos todo primero
-    vistaRegistro.classList.remove('activa');
-    vistaBitacora.classList.remove('activa');
-    if (vistaTareas) vistaTareas.classList.remove('activa');
-    if (vistaStats) vistaStats.classList.remove('activa');
-
-    btnNavRegistro.classList.remove('activo');
-    btnNavBitacora.classList.remove('activo');
-    if (btnNavTareas) btnNavTareas.classList.remove('activo');
-    if (btnNavStats) btnNavStats.classList.remove('activo');
-
-    // Encendemos solo lo que el usuario pidió
-    if (vistaDestino === 'registro') {
-        vistaRegistro.classList.add('activa');
-        btnNavRegistro.classList.add('activo');
-    } else if (vistaDestino === 'bitacora') {
-        vistaBitacora.classList.add('activa');
-        btnNavBitacora.classList.add('activo');
-        actualizarTablaBitacora();
-    } else if (vistaDestino === 'tareas') {
-        if (vistaTareas) vistaTareas.classList.add('activa');
-        if (btnNavTareas) btnNavTareas.classList.add('activo');
-        actualizarListaTareas();
-
-        if (listaActividades.length === 0) {
-            mostrarToast("ℹ️ La bitácora está vacía.\n¡Registra tu primera actividad!");
-        }
-    } else if (vistaDestino === 'stats') {
-        if (vistaStats) vistaStats.classList.add('activa');
-        if (btnNavStats) btnNavStats.classList.add('activo');
-        actualizarEstadisticas();
-    }
-}
-
-btnNavRegistro.addEventListener('click', () => cambiarVista('registro'));
-btnNavBitacora.addEventListener('click', () => cambiarVista('bitacora'));
-if (btnNavTareas) btnNavTareas.addEventListener('click', () => cambiarVista('tareas'));
-if (btnNavStats) btnNavStats.addEventListener('click', () => cambiarVista('stats'));
-
-// ==========================================
-// 3. TOASTS Y CRONÓMETRO
-// ==========================================
-function mostrarToast(mensaje) {
-    const contenedor = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = mensaje;
-    contenedor.appendChild(toast);
-    setTimeout(() => { toast.classList.add('oculto'); setTimeout(() => toast.remove(), 500); }, 2500);
-}
-
-let intervaloReloj; let tiempoInicio; let tiempoTranscurrido = 0; let cronometroEnMarcha = false;
-const displayTiempo = document.getElementById('displayTiempo');
-const btnIniciar = document.getElementById('btnIniciar');
-const btnDetener = document.getElementById('btnDetener');
-const inputHoras = document.getElementById('inputHoras');
-const inputMinutos = document.getElementById('inputMinutos');
-
-btnIniciar.addEventListener('click', () => {
-    if (cronometroEnMarcha) return;
-    cronometroEnMarcha = true;
-    tiempoInicio = Date.now() - tiempoTranscurrido;
-    intervaloReloj = setInterval(actualizarReloj, 1000);
-    btnIniciar.disabled = true; btnDetener.disabled = false;
-    mostrarToast("⏳ Cronómetro iniciado");
-});
-
-btnDetener.addEventListener('click', () => {
-    if (!cronometroEnMarcha) return;
-    cronometroEnMarcha = false;
-    clearInterval(intervaloReloj);
-    btnIniciar.disabled = false; btnDetener.disabled = true;
-
-    // Calcular horas y minutos enteros en lugar de decimales
-    let totalSegundos = Math.floor(tiempoTranscurrido / 1000);
-    let horas = Math.floor(totalSegundos / 3600);
-    let minutos = Math.floor((totalSegundos % 3600) / 60);
-
-    inputHoras.value = horas;
-    inputMinutos.value = minutos;
-
-    mostrarToast(`⏱️ Tiempo detenido.`);
-    tiempoTranscurrido = 0; displayTiempo.textContent = "00:00:00";
-});
-
-function actualizarReloj() {
-    tiempoTranscurrido = Date.now() - tiempoInicio;
-    let totalSegundos = Math.floor(tiempoTranscurrido / 1000);
-    let horas = Math.floor(totalSegundos / 3600);
-    let minutos = Math.floor((totalSegundos % 3600) / 60);
-    let segundos = totalSegundos % 60;
-    displayTiempo.textContent = String(horas).padStart(2, '0') + ":" + String(minutos).padStart(2, '0') + ":" + String(segundos).padStart(2, '0');
-}
-
-// Exportar para pruebas si estamos en un entorno de Node
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        actualizarReloj,
-        getTiempoTranscurrido: () => tiempoTranscurrido,
-        setTiempoInicio: (v) => { tiempoInicio = v; },
-        getTiempoInicio: () => tiempoInicio,
-        setCronometroEnMarcha: (v) => { cronometroEnMarcha = v; },
-        actualizarTablaBitacora: () => { if (typeof actualizarTablaBitacora === 'function') actualizarTablaBitacora(); },
-        actualizarEstadisticas: () => { if (typeof actualizarEstadisticas === 'function') actualizarEstadisticas(); },
-        setListaActividades: (arr) => { listaActividades = arr; }
-    };
-}
-
-// ==========================================
-// 4. LÓGICA DE FORMULARIO Y PLANTILLAS
-// ==========================================
-function actualizarPlantillas() {
-    const contenedor = document.getElementById('contenedorPlantillas');
-    if (!contenedor) return;
-    contenedor.innerHTML = "";
-
-    if (plantillasGuardadas.length === 0) return;
-
-    const fragment = document.createDocumentFragment();
-    plantillasGuardadas.forEach((plantilla, index) => {
-        const btn = document.createElement('button');
-        btn.className = 'plantilla-btn';
-        btn.textContent = `⚡ ${plantilla.nombre}`;
-        btn.onclick = (e) => {
-            e.preventDefault();
-            aplicarPlantilla(plantilla);
-        };
-        fragment.appendChild(btn);
-    });
-    contenedor.appendChild(fragment);
-}
-
-function aplicarPlantilla(plantilla) {
-    document.getElementById('protocolo').value = plantilla.protocolo || "";
-    selectCategoria.value = plantilla.categoria || "";
-    selectCategoria.dispatchEvent(new Event('change'));
-
-    setTimeout(() => {
-        if (opcionesPorCategoria[plantilla.categoria] && opcionesPorCategoria[plantilla.categoria].includes(plantilla.descripcion)) {
-            selectActividad.value = plantilla.descripcion;
-            textareaDescripcion.classList.add('oculto');
-            labelDescripcion.classList.add('oculto');
-        } else {
-            selectActividad.value = "Otra";
-            textareaDescripcion.value = plantilla.descripcion || "";
-            textareaDescripcion.classList.remove('oculto');
-            labelDescripcion.classList.remove('oculto');
-        }
-    }, 50);
-
-    const horasTotales = parseFloat(plantilla.horas) || 0;
-    document.getElementById('inputHoras').value = Math.floor(horasTotales);
-    document.getElementById('inputMinutos').value = Math.round((horasTotales - Math.floor(horasTotales)) * 60);
-
-    mostrarToast(`Plantilla "${plantilla.nombre}" aplicada`);
-}
-
-document.getElementById('btnGuardarPlantilla').addEventListener('click', () => {
-    let descripcionFinal = selectCategoria.value === "otra" || selectActividad.value === "Otra"
-        ? textareaDescripcion.value : selectActividad.value;
-
-    if (!selectCategoria.value || !descripcionFinal) {
-        mostrarToast("⚠️ Completa Categoría y Actividad para guardar plantilla.");
+// --- Authentication & Session Management ---
+async function checkSession() {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+        console.error("Error checking session:", error.message);
+        mostrarLogin();
         return;
     }
 
-    const nombre = prompt("Dale un nombre corto a esta plantilla (Ej: Review Diario):");
-    if (!nombre) return;
+    if (session) {
+        await initializeUser(session.user);
+    } else {
+        mostrarLogin();
+    }
+}
 
-    const hrs = parseInt(document.getElementById('inputHoras').value) || 0;
-    const mins = parseInt(document.getElementById('inputMinutos').value) || 0;
-    const horasCalculadas = parseFloat((hrs + (mins / 60)).toFixed(2));
-
-    const nuevaPlantilla = {
-        nombre: nombre,
-        protocolo: document.getElementById('protocolo').value,
-        categoria: selectCategoria.value,
-        descripcion: descripcionFinal,
-        horas: horasCalculadas
-    };
-
-    plantillasGuardadas.push(nuevaPlantilla);
-    localStorage.setItem('plantillas', JSON.stringify(plantillasGuardadas));
-    actualizarPlantillas();
-    mostrarToast("✅ Plantilla guardada.");
+if (supabase) supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN') {
+        await initializeUser(session.user);
+    } else if (event === 'SIGNED_OUT') {
+        State.user = null;
+        State.profile = null;
+        mostrarLogin();
+    }
 });
 
-const selectCategoria = document.getElementById('categoria');
-const selectActividad = document.getElementById('actividadEspecifica');
-const labelActividad = document.getElementById('labelActividad');
-const textareaDescripcion = document.getElementById('descripcion');
-const labelDescripcion = document.getElementById('labelDescripcion');
+async function initializeUser(user) {
+    State.user = user;
+    document.getElementById('userEmailDisplay').textContent = user.email;
 
-const opcionesPorCategoria = {
-    monitoreo: [
-        "Visita de Selección (PSV)",
-        "Visita de Inicio (SIV)",
-        "Visita de Monitoreo Interino (IMV/RMV)",
-        "Visita de Cierre (COV)",
-        "Preparación/Atención de Auditorías o Inspecciones",
-        "Seguimiento de Hallazgos (Action Items)",
-        "Verificación / Revisión de documentos (SDV/SDR)",
-        "Otra"
-    ],
-    documentacion: [
-        "Actualización de TMF / ISF",
-        "Control de Versiones y Archivo",
-        "Gestión de Firmas (DOA, FDA 1572)",
-        "Revisión de Calidad (QC) de Documentos",
-        "Manejo de Correspondencia del Estudio",
-        "Preparación de Manuales/Checklists",
-        "Otra"
-    ],
-    entrenamiento: [
-        "Entrenamiento en Protocolo / Enmiendas",
-        "Entrenamiento en Buenas Prácticas Clínicas (GCP)",
-        "Entrenamiento en Sistemas (EDC, CTMS, eISF)",
-        "Inducción (Onboarding) de Equipo",
-        "Otra"
-    ],
-    reuniones: [
-        "Reunión de Equipo de Estudio (Interna)",
-        "Reunión con el Sponsor / CRO",
-        "Reunión de Investigadores (Investigator Meeting)",
-        "Reunión con el Sitio Clínico / Proveedores",
-        "Elaboración de Minutas de Reunión",
-        "Otra"
-    ],
-    coordinacion: [
-        "Pre-Screening y Reclutamiento de Pacientes",
-        "Proceso de Consentimiento Informado (ICF)",
-        "Visita de Paciente (Screening/Randomización)",
-        "Visitas de Seguimiento de Paciente",
-        "Manejo de Muestras Biológicas (Laboratorio/Envío)",
-        "Manejo de Droga de Estudio (IP Accountability)",
-        "Evaluación y Reporte de Eventos Adversos (AE/SAE)",
-        "Educación y Retención de Pacientes",
-        "Otra"
-    ],
-    data_entry: [
-        "Ingreso de Datos en eCRF (EDC)",
-        "Revisión y Resolución de Queries",
-        "Control de Calidad (QC) de Datos Ingresados",
-        "Conciliación de Datos (SAEs, Laboratorios)",
-        "Gestión de Diarios de Pacientes (ePRO/eDiary)",
-        "Revisión de Source Documents (Documentos Fuente)",
-        "Otra"
-    ],
-    regulatorio: [
-        "Sometimiento Inicial al Comité de Ética (IRB/IEC)",
-        "Sometimiento de Enmiendas y Renovaciones Anuales",
-        "Reporte de Seguridad (SAE/SUSAR) al Comité",
-        "Sometimiento a Agencia Regulatoria",
-        "Actualización de Documentos de Investigadores (CVs, Licencias)",
-        "Otra"
-    ],
-    micro_operaciones: [
-        "Resolver Query (Rápida)",
-        "Actualizar dato aislado en EDC",
-        "Revisión rápida de eCRF",
-        "Verificación de Alerta de Sistema",
-        "Otra"
-    ],
-    micro_administrativas: [
-        "Responder Email Corto",
-        "Llamada breve (PI/CRA/Sponsor)",
-        "Archivar Documento Simple (Ej. ICF)",
-        "Agendar/Modificar Reunión",
-        "Otra"
-    ]
-};
+    try {
+        // Fetch user profile to get role
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
 
-selectCategoria.addEventListener('change', () => {
-    const cat = selectCategoria.value;
-    selectActividad.innerHTML = "";
-    selectActividad.appendChild(crearOpcion("", "-- Selecciona una actividad --"));
+        if (error) throw error;
+        State.profile = profile;
 
-    if (cat === "otra") {
-        selectActividad.classList.add('oculto'); labelActividad.classList.add('oculto');
-        textareaDescripcion.classList.remove('oculto'); labelDescripcion.classList.remove('oculto');
-    } else if (cat !== "") {
-        const fragment = document.createDocumentFragment();
-        opcionesPorCategoria[cat].forEach(act => {
-            fragment.appendChild(crearOpcion(act, act));
+        mostrarAppPrincipal();
+        configurarUIporRol(profile.role);
+
+        // Load initial data
+        await cargarCatalogos();
+        await cargarBitacora();
+
+    } catch (err) {
+        console.error("Error initializing user profile:", err.message);
+        // Fallback or error state
+    }
+}
+
+// --- UI & Polymorphism ---
+function mostrarLogin() {
+    document.getElementById('pantallaLogin').style.display = 'block';
+    document.getElementById('pantallaPrincipal').style.display = 'none';
+}
+
+function mostrarAppPrincipal() {
+    document.getElementById('pantallaLogin').style.display = 'none';
+    document.getElementById('pantallaPrincipal').style.display = 'block';
+}
+
+function configurarUIporRol(rol) {
+    const navMenu = document.getElementById('navMenu');
+    const btnNavDashboard = document.getElementById('btnNavDashboard');
+    const btnNavCatalogos = document.getElementById('btnNavCatalogos');
+
+    navMenu.style.display = 'flex'; // Show navigation
+
+    if (rol === 'super_admin' || rol === 'manager') {
+        btnNavDashboard.style.display = 'inline-block';
+        btnNavCatalogos.style.display = 'inline-block';
+    } else {
+        // Staff role
+        btnNavDashboard.style.display = 'none';
+        btnNavCatalogos.style.display = 'none';
+    }
+
+    // Reset view
+    cambiarVista('vistaRegistro');
+}
+
+function cambiarVista(vistaId) {
+    // Hide all views
+    document.querySelectorAll('.vista').forEach(v => {
+        v.style.display = 'none';
+        v.classList.remove('active');
+    });
+
+    // Update nav buttons
+    document.querySelectorAll('.nav-btn').forEach(b => {
+        b.classList.remove('active');
+        if (b.dataset.target === vistaId) b.classList.add('active');
+    });
+
+    // Show target view
+    const targetView = document.getElementById(vistaId);
+    if (targetView) {
+        targetView.style.display = 'block';
+        targetView.classList.add('active');
+
+        if(vistaId === 'vistaDashboard') cargarDashboardEquipo();
+    }
+    State.currentView = vistaId;
+}
+
+// --- Event Listeners Initialization ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Login Form
+    document.getElementById('formularioLogin').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('inputEmail').value;
+        const password = document.getElementById('inputPassword').value;
+        const errorDiv = document.getElementById('mensajeErrorLogin');
+
+        try {
+            errorDiv.textContent = 'Iniciando sesión...';
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            errorDiv.textContent = '';
+        } catch (err) {
+            errorDiv.textContent = 'Error: ' + err.message;
+        }
+    });
+
+    // Logout
+    document.getElementById('btnCerrarSesion').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+    });
+
+    // Navigation
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            cambiarVista(e.target.dataset.target);
         });
-        selectActividad.appendChild(fragment);
-        selectActividad.classList.remove('oculto'); labelActividad.classList.remove('oculto');
-        textareaDescripcion.classList.add('oculto'); labelDescripcion.classList.add('oculto');
-    } else {
-        selectActividad.classList.add('oculto'); labelActividad.classList.add('oculto');
-        textareaDescripcion.classList.add('oculto'); labelDescripcion.classList.add('oculto');
-    }
+    });
+
+    // Initialize check
+    checkSession();
 });
 
-selectActividad.addEventListener('change', () => {
-    if (selectActividad.value === "Otra") {
-        textareaDescripcion.classList.remove('oculto'); labelDescripcion.classList.remove('oculto');
-    } else {
-        textareaDescripcion.classList.add('oculto'); labelDescripcion.classList.add('oculto');
+// Stubs for core functions to be implemented in next step
+
+
+
+// Exports for testing
+if (typeof module !== 'undefined' && module.exports) {
     }
-});
 
-// ==========================================
-// 5. GUARDAR Y EXPORTAR
-// ==========================================
-
+// --- Utility Functions (Clean, Efficient, Secure) ---
 function escaparCSV(valor) {
-    if (valor === null || valor === undefined) return '';
-    let strValor = String(valor);
-
-    // Mitigación de Formula Injection (CSV Injection)
-    if (/^[=+\-@\t\r]/.test(strValor)) {
-        strValor = "'" + strValor;
+    if (valor == null || valor === '') return '';
+    let valStr = String(valor);
+    if (/^[=+\-@\t\r]/.test(valStr)) {
+        valStr = "'" + valStr;
     }
-
-    // Escapado estándar de CSV si contiene comas, comillas o saltos de línea
-    if (/[,"\n\r]/.test(strValor)) {
-        strValor = '"' + strValor.replace(/"/g, '""') + '"';
+    if (valStr.includes('"') || valStr.includes(',') || valStr.includes('\n')) {
+        valStr = '"' + valStr.replace(/"/g, '""') + '"';
     }
-
-    return strValor;
+    return valStr;
 }
-
-const formulario = document.getElementById('formularioTimesheet');
-const botonExportar = document.getElementById('btnExportar');
-const cuerpoTabla = document.querySelector('#tablaBitacora tbody');
-
-// Variables de Filtro
-let actividadesFiltradas = [];
-let filtrosActivos = false;
-
-document.getElementById('btnAplicarFiltros').addEventListener('click', () => {
-    filtrosActivos = true;
-    actualizarTablaBitacora();
-});
-
-document.getElementById('btnLimpiarFiltros').addEventListener('click', () => {
-    document.getElementById('filtroFechaInicio').value = "";
-    document.getElementById('filtroFechaFin').value = "";
-    document.getElementById('filtroProtocolo').value = "";
-    filtrosActivos = false;
-    actualizarTablaBitacora();
-});
-
-/**
- * Extrae la lógica de filtrado de actividades según los parámetros dados.
- *
- * @param {Array} actividades - Lista de actividades a filtrar.
- * @param {string} fechaInicio - Fecha de inicio en formato YYYY-MM-DD.
- * @param {string} fechaFin - Fecha de fin en formato YYYY-MM-DD.
- * @param {string} protocolo - Protocolo a filtrar.
- * @returns {Array} - Nueva lista con las actividades filtradas.
- */
-function filtrarActividades(actividades, fechaInicio, fechaFin, protocolo) {
-    return actividades.filter(act => {
-        if (fechaInicio && act.fecha < fechaInicio) return false;
-        if (fechaFin && act.fecha > fechaFin) return false;
-        if (protocolo && act.protocolo !== protocolo) return false;
-        return true;
-    });
-}
-
-function actualizarTablaBitacora() {
-    cuerpoTabla.innerHTML = "";
-
-    if (listaActividades.length === 0) {
-        cuerpoTabla.innerHTML = "<tr><td colspan='6' style='text-align: center;'>Sin actividades.</td></tr>";
-        return;
-    }
-
-    // Obtener valores de filtro
-    const fInicio = document.getElementById('filtroFechaInicio').value;
-    const fFin = document.getElementById('filtroFechaFin').value;
-    const fProtocolo = document.getElementById('filtroProtocolo').value;
-
-    // Aplicar Filtros
-    actividadesFiltradas = filtrarActividades(listaActividades, fInicio, fFin, fProtocolo);
-
-    if (actividadesFiltradas.length === 0) {
-        cuerpoTabla.innerHTML = "<tr><td colspan='6' style='text-align: center;'>No se encontraron resultados para los filtros aplicados.</td></tr>";
-        return;
-    }
-
-const fragment = document.createDocumentFragment();
-    actividadesFiltradas.slice().reverse().forEach((actividad) => {
-        const fila = document.createElement('tr');
-        const nombreCategoriaRaw = NOMBRES_CATEGORIAS[actividad.categoria] || actividad.categoria;
-
-        // Sanitización para prevenir XSS
-        const escFecha = escapeHTML(actividad.fecha);
-        const escProtocolo = escapeHTML(actividad.protocolo || "-");
-        const escCategoria = escapeHTML(nombreCategoriaRaw);
-        const escDescripcion = escapeHTML(actividad.descripcion);
-        const escHoras = escapeHTML(actividad.horas);
-
-        fila.innerHTML = `
-            <td>${escFecha}</td>
-            <td>${escProtocolo}</td>
-            <td>${escCategoria}</td>
-            <td>${escDescripcion}</td>
-            <td><strong>${escHoras}</strong></td>
-            <td>
-                <button aria-label="Editar actividad" onclick="cargarParaEditar(${actividad.id})" style="background:none; border:none; cursor:pointer;">✏️</button>
-                <button aria-label="Eliminar actividad" onclick="eliminarRegistro(${actividad.id})" style="background:none; border:none; cursor:pointer;">🗑️</button>
-            </td>
-        `;
-        fragment.appendChild(fila);
-    });
-    cuerpoTabla.appendChild(fragment);
-}
-
-window.eliminarRegistro = (id) => {
-    if (confirm("¿Estás seguro de eliminar esta actividad?")) {
-        const index = listaActividades.findIndex(a => a.id === id);
-        if (index > -1) {
-            listaActividades.splice(index, 1);
-        }
-        eliminarDeDB(id);
-        actualizarTablaBitacora();
-        mostrarToast("🗑️ Registro eliminado.");
-    }
-};
-
-window.cargarParaEditar = (id) => {
-    const index = listaActividades.findIndex(a => a.id === id);
-    if (index === -1) return;
-    const act = listaActividades[index];
-    document.getElementById('editId').value = id;
-    document.getElementById('fecha').value = act.fecha;
-    document.getElementById('protocolo').value = act.protocolo;
-    selectCategoria.value = act.categoria;
-
-    // Disparar el evento change para que se carguen las actividades específicas
-    selectCategoria.dispatchEvent(new Event('change'));
-
-    if (opcionesPorCategoria[act.categoria] && opcionesPorCategoria[act.categoria].includes(act.descripcion)) {
-        selectActividad.value = act.descripcion;
-        textareaDescripcion.classList.add('oculto');
-        labelDescripcion.classList.add('oculto');
-    } else {
-        selectActividad.value = "Otra";
-        textareaDescripcion.value = act.descripcion;
-        textareaDescripcion.classList.remove('oculto');
-        labelDescripcion.classList.remove('oculto');
-    }
-
-    // Convertir decimal de vuelta a horas y minutos para los inputs
-    const horasTotales = parseFloat(act.horas) || 0;
-    const hrsEnteras = Math.floor(horasTotales);
-    const minsEnteros = Math.round((horasTotales - hrsEnteras) * 60);
-
-    document.getElementById('inputHoras').value = hrsEnteras;
-    document.getElementById('inputMinutos').value = minsEnteros;
-
-    cambiarVista('registro');
-    document.querySelector('#formularioTimesheet button[type="submit"]').textContent = "Actualizar Actividad";
-};
-
-formulario.addEventListener('submit', evento => {
-    evento.preventDefault();
-    const editId = document.getElementById('editId').value;
-
-    let descripcionFinal = selectCategoria.value === "otra" || selectActividad.value === "Otra"
-        ? textareaDescripcion.value.replace(/,/g, " ") : selectActividad.value;
-
-    // Calcular el decimal de horas en base a horas y minutos enteros
-    const hrs = parseInt(document.getElementById('inputHoras').value) || 0;
-    const mins = parseInt(document.getElementById('inputMinutos').value) || 0;
-    const horasCalculadas = parseFloat((hrs + (mins / 60)).toFixed(2));
-
-    const datosActividad = {
-        fecha: document.getElementById('fecha').value,
-        protocolo: document.getElementById('protocolo').value,
-        categoria: selectCategoria.value,
-        descripcion: descripcionFinal,
-        horas: horasCalculadas
-    };
-
-    if (editId) {
-        const idInt = parseInt(editId);
-        const index = listaActividades.findIndex(a => a.id === idInt);
-        if (index !== -1) {
-            listaActividades[index] = { ...datosActividad, id: idInt };
-            actualizarEnDB(idInt, datosActividad);
-            mostrarToast("✅ Registro actualizado.");
-        }
-        document.getElementById('editId').value = "";
-        document.querySelector('#formularioTimesheet button[type="submit"]').textContent = "Guardar Actividad";
-    } else {
-        listaActividades.push(datosActividad);
-        guardarEnDB(datosActividad);
-        mostrarToast(`✅ Guardado. Tienes ${listaActividades.length} actividades.`);
-    }
-
-    // Lógica para Action Items
-    const checkboxActionItem = document.getElementById('checkboxActionItem');
-    if (checkboxActionItem && checkboxActionItem.checked) {
-        const nuevaTarea = {
-            titulo: `Pendiente de: ${datosActividad.descripcion}`,
-            protocolo: datosActividad.protocolo,
-            fechaCreacion: datosActividad.fecha,
-            estado: 'pendiente'
-        };
-        listaTareas.push(nuevaTarea);
-        guardarTareaEnDB(nuevaTarea);
-        actualizarListaTareas();
-        mostrarToast("📝 Action Item creado en Tareas.");
-        checkboxActionItem.checked = false;
-    }
-
-    actualizarTablaBitacora();
-
-    // Guardar protocolo si es nuevo
-    if (datosActividad.protocolo && !listaProtocolos.includes(datosActividad.protocolo)) {
-        listaProtocolos.push(datosActividad.protocolo);
-        localStorage.setItem('protocolos', JSON.stringify(listaProtocolos));
-        actualizarDatalistProtocolos();
-    }
-
-    formulario.reset();
-    selectActividad.classList.add('oculto'); labelActividad.classList.add('oculto');
-    textareaDescripcion.classList.add('oculto'); labelDescripcion.classList.add('oculto');
-});
-
-// ==========================================
-// LÓGICA DE ACTION ITEMS (TAREAS)
-// ==========================================
-function actualizarListaTareas() {
-    const contenedor = document.getElementById('listaActionItems');
-    if (!contenedor) return;
-    contenedor.innerHTML = "";
-
-    if (listaTareas.length === 0) {
-        contenedor.innerHTML = "<p style='text-align: center; color: #777;'>No hay tareas pendientes. ¡Todo al día! 🎉</p>";
-        return;
-    }
-
-    const fragment = document.createDocumentFragment();
-    listaTareas.forEach((tarea, index) => {
-        const div = document.createElement('div');
-        div.className = 'tarea-item';
-        if (tarea.estado === 'completado') {
-            div.style.opacity = '0.6';
-            div.style.backgroundColor = '#f8f9fa';
-        }
-
-        const btnColor = tarea.estado === 'completado' ? '#6c757d' : '#28a745';
-        const btnText = tarea.estado === 'completado' ? 'Deshacer' : 'Completar';
-
-        const escTitulo = escapeHTML(tarea.titulo);
-        const escProtocolo = escapeHTML(tarea.protocolo || 'Sin protocolo');
-        const escFechaCreacion = escapeHTML(tarea.fechaCreacion);
-
-        div.innerHTML = `
-            <div class="tarea-info">
-                <div class="tarea-titulo" style="${tarea.estado === 'completado' ? 'text-decoration: line-through;' : ''}">${escTitulo}</div>
-                <div class="tarea-meta">${escProtocolo} • ${escFechaCreacion}</div>
-            </div>
-            <div class="tarea-acciones">
-                <button aria-label="${btnText}" onclick="toggleTarea(${tarea.id}, ${index})" style="background-color: ${btnColor}; padding: 6px 10px; font-size: 12px; margin: 0; width: auto;">✔️</button>
-                <button aria-label="Eliminar tarea" onclick="eliminarTarea(${tarea.id}, ${index})" style="background-color: #dc3545; padding: 6px 10px; font-size: 12px; margin: 0; width: auto;">🗑️</button>
-            </div>
-        `;
-        fragment.appendChild(div);
-    });
-    contenedor.appendChild(fragment);
-}
-
-window.toggleTarea = (id, index) => {
-    const tarea = listaTareas[index];
-    tarea.estado = tarea.estado === 'pendiente' ? 'completado' : 'pendiente';
-    actualizarTareaEnDB(id, tarea);
-    actualizarListaTareas();
-};
-
-window.eliminarTarea = (id, index) => {
-    if (confirm("¿Eliminar este Action Item?")) {
-        listaTareas.splice(index, 1);
-        eliminarTareaDeDB(id);
-        actualizarListaTareas();
-        mostrarToast("🗑️ Action Item eliminado.");
-    }
-};
-
-
-botonExportar.addEventListener('click', () => {
-    // Usar actividadesFiltradas en lugar de listaActividades completa para la exportación inteligente
-    const datosAExportar = filtrosActivos ? actividadesFiltradas : listaActividades;
-
-    if (datosAExportar.length === 0) { mostrarToast("⚠️ No hay datos para exportar."); return; }
-
-    const filasCSV = ["Fecha,Protocolo,Categoria,Descripcion,Horas"];
-    datosAExportar.forEach(act => {
-        const pFecha = escaparCSV(act.fecha);
-        const pProtocolo = escaparCSV(act.protocolo);
-        const pCategoria = escaparCSV(act.categoria);
-        const pDescripcion = escaparCSV(act.descripcion);
-        const pHoras = escaparCSV(act.horas);
-        filasCSV.push(`${pFecha},${pProtocolo},${pCategoria},${pDescripcion},${pHoras}`);
-    });
-
-    const contenidoCSV = filasCSV.join('\n') + '\n';
-    const blob = new Blob([contenidoCSV], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const enlace = document.createElement("a");
-    enlace.setAttribute("href", url);
-    enlace.setAttribute("download", "Timesheet_Clinico.csv");
-    document.body.appendChild(enlace); enlace.click(); document.body.removeChild(enlace);
-    mostrarToast("📥 Excel descargado (filtrado).");
-});
-
-// ==========================================
-// 6. FUNCIONES ADICIONALES
-// ==========================================
 
 function escapeHTML(str) {
-    if (str === null || str === undefined || str === '') return '';
+    if (str == null || str === '') return '';
     return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
-/**
- * Crea un elemento <option> de forma segura y eficiente.
- * 🛡️ Sentinel: El uso de .textContent previene ataques XSS al tratar el texto como contenido literal.
- */
 function crearOpcion(valor, texto) {
-    const opt = document.createElement('option');
-    opt.value = valor;
-    opt.textContent = texto || valor;
-    return opt;
+    const opcion = document.createElement('option');
+    opcion.value = valor;
+    opcion.textContent = texto;
+    return opcion;
 }
 
-function actualizarDatalistProtocolos() {
-    const datalist = document.getElementById('listaProtocolos');
-    if (!datalist) return;
-    datalist.innerHTML = "";
-    const fragment = document.createDocumentFragment();
-    listaProtocolos.forEach(p => {
-        fragment.appendChild(crearOpcion(p));
-    });
-    datalist.appendChild(fragment);
+// --- Data Fetching & Rendering ---
+async function cargarCatalogos() {
+    try {
+        // Fetch Protocols
+        const { data: protocolos, error: errP } = await supabase.from('protocols').select('id, name').order('name');
+        if (errP) throw errP;
+        State.protocols = protocolos;
 
-    // Actualizar también el filtro de protocolos
-    const selectFiltro = document.getElementById('filtroProtocolo');
-    if (selectFiltro) {
-        selectFiltro.innerHTML = "";
-        const fragmentFiltro = document.createDocumentFragment();
-        fragmentFiltro.appendChild(crearOpcion("", "Todos los Protocolos"));
-        listaProtocolos.forEach(p => {
-            fragmentFiltro.appendChild(crearOpcion(p, p));
-        });
-        selectFiltro.appendChild(fragmentFiltro);
+        // Fetch Categories
+        const { data: categorias, error: errC } = await supabase.from('categories').select('id, name, role_target').order('name');
+        if (errC) throw errC;
+        State.categories = categorias;
+
+        // Fetch Activities
+        const { data: actividades, error: errA } = await supabase.from('activities').select('id, category_id, name').order('name');
+        if (errA) throw errA;
+        State.activities = actividades;
+
+        renderizarSelects();
+    } catch (err) {
+        console.error("Error loading catalogs:", err.message);
     }
 }
-actualizarDatalistProtocolos();
-actualizarPlantillas();
 
-/**
- * Calcula todas las estadísticas necesarias de forma centralizada.
- * @param {Array} actividades - Lista de actividades a procesar
- * @param {number} metaSemanal - Meta de horas semanales
- * @returns {Object} Datos estadísticos agregados
- */
-function calcularDatosEstadisticas(actividades, metaSemanal) {
-    let totalHoras = 0;
-    let horasEstaSemana = 0;
-    const statsPorCategoria = {};
-    const statsPorProtocolo = {};
-    const statsPorFecha = {};
-    let microTareasCount = 0;
-    let microTareasHoras = 0;
+function renderizarSelects() {
+    const selectProtocolo = document.getElementById('inputProtocolo');
+    const selectCategoria = document.getElementById('selectCategoria');
+    const selectActividad = document.getElementById('selectActividad');
 
-    // Usar formato ISO para comparación eficiente sin instanciar Date en el bucle
-    const hoy = new Date();
-    const diaDeLaSemana = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1;
-    const lunes = new Date(hoy);
-    lunes.setDate(hoy.getDate() - diaDeLaSemana);
-    lunes.setHours(0, 0, 0, 0);
+    // Clean existing
+    selectProtocolo.innerHTML = '<option value="" disabled selected>Seleccione protocolo</option>';
+    selectCategoria.innerHTML = '<option value="" disabled selected>Seleccione categoría</option>';
+    selectActividad.innerHTML = '<option value="" disabled selected>Seleccione actividad</option>';
 
-    const domingo = new Date(lunes);
-    domingo.setDate(lunes.getDate() + 6);
-    domingo.setHours(23, 59, 59, 999);
+    // Use DocumentFragment for performance
+    const fragmentProtocolo = document.createDocumentFragment();
+    State.protocols.forEach(p => fragmentProtocolo.appendChild(crearOpcion(p.id, p.name)));
+    selectProtocolo.appendChild(fragmentProtocolo);
 
-    // Convert to simple ISO string format YYYY-MM-DD for fast comparison
-    const isoLunes = lunes.toISOString().split('T')[0];
-    const isoDomingo = domingo.toISOString().split('T')[0];
+    const fragmentCategoria = document.createDocumentFragment();
+    // Filter categories based on role if necessary, though RLS might already do this
+    State.categories.forEach(c => {
+        // Simple client-side filtering logic based on profile role (target role)
+        if (!c.role_target || c.role_target === State.profile.role || State.profile.role === 'super_admin') {
+             fragmentCategoria.appendChild(crearOpcion(c.id, c.name));
+        }
+    });
+    selectCategoria.appendChild(fragmentCategoria);
 
-    actividades.forEach(act => {
-        const horasAct = parseFloat(act.horas) || 0;
-        totalHoras += horasAct;
+    // Event listener for Category change to load Activities
+    selectCategoria.addEventListener('change', (e) => {
+        const catId = e.target.value;
+        const actividadesFiltradas = State.activities.filter(a => a.category_id === catId);
 
-        // Acumular por categoría
-        statsPorCategoria[act.categoria] = (statsPorCategoria[act.categoria] || 0) + horasAct;
+        selectActividad.innerHTML = '<option value="" disabled selected>Seleccione actividad</option>';
+        const fragmentAct = document.createDocumentFragment();
+        actividadesFiltradas.forEach(a => fragmentAct.appendChild(crearOpcion(a.id, a.name)));
+        selectActividad.appendChild(fragmentAct);
+        selectActividad.disabled = actividadesFiltradas.length === 0;
+    });
+}
 
-        // Acumular por protocolo
-        const protocoloKey = act.protocolo || "Sin Protocolo";
-        statsPorProtocolo[protocoloKey] = (statsPorProtocolo[protocoloKey] || 0) + horasAct;
+// Initializing event listener for save
+document.addEventListener('DOMContentLoaded', () => {
+     document.getElementById('formularioBitacora').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await guardarRegistro();
+    });
+});
 
-        // Acumular por fecha para calcular burnout
-        statsPorFecha[act.fecha] = (statsPorFecha[act.fecha] || 0) + horasAct;
+async function guardarRegistro() {
+    const inputFecha = document.getElementById('inputFecha').value;
+    const inputProtocolo = document.getElementById('inputProtocolo').value;
+    const selectActividad = document.getElementById('selectActividad').value;
+    const inputHoras = parseInt(document.getElementById('inputHoras').value, 10) || 0;
+    const inputMinutos = parseInt(document.getElementById('inputMinutos').value, 10) || 0;
+    const entryId = document.getElementById('inputIdEdicion').value;
 
-        // Contar micro-tareas y su tiempo
-        if (act.categoria === 'micro_operaciones' || act.categoria === 'micro_administrativas') {
-            microTareasCount++;
-            microTareasHoras += horasAct;
+    const totalHoras = parseFloat((inputHoras + (inputMinutos / 60)).toFixed(2));
+
+    if (totalHoras <= 0) {
+        alert("El tiempo debe ser mayor a 0.");
+        return;
+    }
+
+    const payload = {
+        date: inputFecha,
+        protocol_id: inputProtocolo,
+        activity_id: selectActividad,
+        hours: inputHoras,
+        minutes: inputMinutos,
+        total_hours: totalHoras,
+        user_id: State.profile.id
+    };
+
+    try {
+        if (entryId) {
+             const { error } = await supabase.from('time_entries').update(payload).eq('id', entryId);
+             if (error) throw error;
+        } else {
+             const { error } = await supabase.from('time_entries').insert([payload]);
+             if (error) throw error;
         }
 
-        // Calcular horas FTE semanal
-        // Using string comparison instead of creating Date objects
-        if (act.fecha >= isoLunes && act.fecha <= isoDomingo) {
-            horasEstaSemana += horasAct;
+        // Reset form
+        document.getElementById('formularioBitacora').reset();
+        document.getElementById('inputIdEdicion').value = '';
+        document.getElementById('btnGuardar').textContent = 'Guardar Actividad';
+        document.getElementById('selectActividad').disabled = true;
+
+        await cargarBitacora();
+
+    } catch (err) {
+        console.error("Error saving entry:", err.message);
+        alert("Error al guardar: " + err.message);
+    }
+}
+
+async function cargarBitacora() {
+    try {
+        const { data: entries, error } = await supabase
+            .from('time_entries')
+            .select(`
+                id, date, hours, minutes, total_hours, status,
+                activities(id, name, category_id),
+                protocols(id, name)
+            `)
+            .eq('user_id', State.profile.id)
+            .order('date', { ascending: false })
+            .limit(50); // limit for now
+
+        if (error) throw error;
+        State.timeEntries = entries;
+
+        renderizarTablaBitacora(entries);
+        actualizarEstadisticas(entries);
+    } catch(err) {
+         console.error("Error fetching entries:", err.message);
+    }
+}
+
+function renderizarTablaBitacora(entries) {
+    const tbody = document.getElementById('cuerpoTabla');
+    tbody.innerHTML = '';
+
+    if (entries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #6b7280;">No hay actividades registradas</td></tr>`;
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    entries.forEach(entry => {
+        const tr = document.createElement('tr');
+
+        // Safe data retrieval
+        const fechaSafe = escapeHTML(entry.date);
+        const protocoloSafe = entry.protocols ? escapeHTML(entry.protocols.name) : 'N/A';
+        const actividadSafe = entry.activities ? escapeHTML(entry.activities.name) : 'N/A';
+
+        // Find category name manually since we didn't nest it deeply in the query
+        let categoriaName = 'N/A';
+        if (entry.activities && State.categories) {
+            const cat = State.categories.find(c => c.id === entry.activities.category_id);
+            if(cat) categoriaName = escapeHTML(cat.name);
+        }
+
+        const tiempoFmt = `${entry.hours}h ${entry.minutes}m`;
+
+        const spanStatus = `<span class="status-badge status-${entry.status}">${escapeHTML(entry.status)}</span>`;
+
+        // Actions
+        let accionesHtml = '';
+        if (entry.status === 'pending' || entry.status === 'queried') {
+             accionesHtml = `
+                <button class="btn-secundario btn-accion" onclick="editarRegistro('${entry.id}')">Editar</button>
+             `;
+        } else {
+             accionesHtml = `<span style="font-size: 0.8em; color: gray;">Bloqueado</span>`;
+        }
+
+        tr.innerHTML = `
+            <td>${fechaSafe}</td>
+            <td>${protocoloSafe}</td>
+            <td>${categoriaName}</td>
+            <td>${actividadSafe}</td>
+            <td>${tiempoFmt}</td>
+            <td>${spanStatus}</td>
+            <td class="acciones-celda">${accionesHtml}</td>
+        `;
+        fragment.appendChild(tr);
+    });
+
+    tbody.appendChild(fragment);
+}
+
+function editarRegistro(id) {
+    const entry = State.timeEntries.find(e => e.id === id);
+    if (!entry) return;
+
+    document.getElementById('inputIdEdicion').value = entry.id;
+    document.getElementById('inputFecha').value = entry.date;
+
+    if (entry.protocols) {
+        document.getElementById('inputProtocolo').value = entry.protocols.id;
+    }
+
+    if (entry.activities) {
+        // Need to set category first to trigger activity options load
+        const cat = State.categories.find(c => c.id === entry.activities.category_id);
+        if (cat) {
+            document.getElementById('selectCategoria').value = cat.id;
+            // Manually trigger the change event to populate activities
+            document.getElementById('selectCategoria').dispatchEvent(new Event('change'));
+            document.getElementById('selectActividad').value = entry.activities.id;
+        }
+    }
+
+    document.getElementById('inputHoras').value = entry.hours;
+    document.getElementById('inputMinutos').value = entry.minutes;
+
+    document.getElementById('btnGuardar').textContent = 'Actualizar Actividad';
+}
+
+function actualizarEstadisticas(entries) {
+    const hoy = new Date().toISOString().split('T')[0];
+    const horasHoy = entries
+        .filter(e => e.date === hoy)
+        .reduce((sum, e) => sum + parseFloat(e.total_hours), 0);
+
+    document.getElementById('totalHorasDia').textContent = horasHoy.toFixed(2) + ' h';
+}
+
+// --- Dashboard & Audit Flow (Managers & Super Admins) ---
+async function cargarDashboardEquipo() {
+    if (State.profile.role === 'staff') return;
+
+    try {
+        // Build the query to get subordinates' entries
+        let query = supabase
+            .from('time_entries')
+            .select(`
+                id, date, total_hours, status, user_id,
+                profiles!inner(first_name, last_name, role),
+                activities(name),
+                protocols(name)
+            `)
+            .order('date', { ascending: false });
+
+        // If manager, only get staff where manager_id = this.user.id
+        // We use the auth.uid() in RLS, but we can also filter explicitly
+        if (State.profile.role === 'manager') {
+             // RLS already filters this, but just to be explicit
+             // We don't need to add explicit filters if RLS is tight.
+             query = query.neq('user_id', State.profile.id); // exclude self from audit view
+        }
+
+        const { data: teamEntries, error } = await query;
+        if (error) throw error;
+
+        renderizarTablaAuditoria(teamEntries);
+        renderizarKPIsEquipo(teamEntries);
+
+    } catch (err) {
+        console.error("Error loading team dashboard:", err.message);
+    }
+}
+
+function renderizarTablaAuditoria(entries) {
+    const tbody = document.getElementById('cuerpoTablaAuditoria');
+    tbody.innerHTML = '';
+
+    if (!entries || entries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #6b7280;">No hay actividades del equipo pendientes de revisión</td></tr>`;
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    entries.forEach(entry => {
+        const tr = document.createElement('tr');
+
+        const nombre = entry.profiles ? `${escapeHTML(entry.profiles.first_name)} ${escapeHTML(entry.profiles.last_name)}` : 'Usuario Desconocido';
+        const fecha = escapeHTML(entry.date);
+        const actividad = entry.activities ? escapeHTML(entry.activities.name) : 'N/A';
+        const tiempo = `${entry.total_hours} h`;
+        const spanStatus = `<span class="status-badge status-${entry.status}">${escapeHTML(entry.status)}</span>`;
+
+        let acciones = '';
+        if (entry.status === 'pending') {
+            acciones = `
+                <button class="btn-principal btn-accion" onclick="aprobarRegistro('${entry.id}')">Aprobar</button>
+                <button class="btn-peligro btn-accion" onclick="abrirModalQuery('${entry.id}')">Query</button>
+            `;
+        } else if (entry.status === 'queried') {
+            acciones = `<span style="font-size: 0.8em; color: var(--error-color);">Esperando corrección</span>`;
+        } else {
+             acciones = `<span style="font-size: 0.8em; color: var(--success-color);">Auditado</span>`;
+        }
+
+        tr.innerHTML = `
+            <td>${nombre}</td>
+            <td>${fecha}</td>
+            <td>${actividad}</td>
+            <td>${tiempo}</td>
+            <td>${spanStatus}</td>
+            <td class="acciones-celda">${acciones}</td>
+        `;
+        fragment.appendChild(tr);
+    });
+
+    tbody.appendChild(fragment);
+}
+
+function renderizarKPIsEquipo(entries) {
+    const grid = document.getElementById('dashboardStats');
+
+    // Bolt Optimization: Calculate all totals in a single pass O(N)
+    let totalPending = 0;
+    let totalApproved = 0;
+    let totalQueried = 0;
+
+    entries.forEach(e => {
+        const hs = parseFloat(e.total_hours) || 0;
+        if (e.status === 'pending') totalPending += hs;
+        else if (e.status === 'approved') totalApproved += hs;
+        else if (e.status === 'queried') totalQueried += hs;
+    });
+
+    const totalHours = totalPending + totalApproved + totalQueried;
+
+    // Safe division to prevent NaN
+    const pctPending = totalHours > 0 ? (totalPending / totalHours) * 100 : 0;
+    const pctApproved = totalHours > 0 ? (totalApproved / totalHours) * 100 : 0;
+    const pctQueried = totalHours > 0 ? (totalQueried / totalHours) * 100 : 0;
+
+    // Palette UX: Visual progress bars using CSS instead of heavy charting libraries
+    grid.innerHTML = `
+        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
+            <h4 style="margin: 0 0 0.5rem 0; color: #6b7280;">Horas Pendientes</h4>
+            <div style="font-size: 2rem; font-weight: bold; color: var(--warning-color);">${totalPending.toFixed(1)} h</div>
+            <div class="progress-container" aria-hidden="true">
+                <div class="progress-bar bg-warning" style="width: ${pctPending}%;"></div>
+            </div>
+            <span style="font-size: 0.8rem; color: #6b7280;">${pctPending.toFixed(0)}% del total</span>
+        </div>
+
+        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
+            <h4 style="margin: 0 0 0.5rem 0; color: #6b7280;">Horas Aprobadas</h4>
+            <div style="font-size: 2rem; font-weight: bold; color: var(--success-color);">${totalApproved.toFixed(1)} h</div>
+            <div class="progress-container" aria-hidden="true">
+                <div class="progress-bar bg-success" style="width: ${pctApproved}%;"></div>
+            </div>
+            <span style="font-size: 0.8rem; color: #6b7280;">${pctApproved.toFixed(0)}% del total</span>
+        </div>
+
+        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
+            <h4 style="margin: 0 0 0.5rem 0; color: #6b7280;">Horas en Revisión (Queries)</h4>
+            <div style="font-size: 2rem; font-weight: bold; color: var(--error-color);">${totalQueried.toFixed(1)} h</div>
+            <div class="progress-container" aria-hidden="true">
+                <div class="progress-bar bg-error" style="width: ${pctQueried}%;"></div>
+            </div>
+            <span style="font-size: 0.8rem; color: #6b7280;">${pctQueried.toFixed(0)}% del total</span>
+        </div>
+    `;
+
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
+    grid.style.gap = '1rem';
+    grid.style.marginBottom = '2rem';
+}
+
+async function aprobarRegistro(id) {
+    if (!confirm('¿Estás seguro de aprobar este registro?')) return;
+
+    try {
+        const { error } = await supabase
+            .from('time_entries')
+            .update({ status: 'approved' })
+            .eq('id', id);
+
+        if (error) throw error;
+
+        await cargarDashboardEquipo();
+        alert('Registro aprobado exitosamente.');
+    } catch (err) {
+        console.error("Error approving entry:", err.message);
+        alert('Error al aprobar: ' + err.message);
+    }
+}
+
+// Modal Query Logic
+function abrirModalQuery(entryId) {
+    document.getElementById('hiddenEntryIdForQuery').value = entryId;
+    document.getElementById('inputQueryText').value = '';
+    document.getElementById('modalQuery').hidden = false;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+document.getElementById('btnCancelQuery').addEventListener('click', () => {
+    document.getElementById('modalQuery').hidden = true;
+});
+
+document.getElementById('btnSaveQuery').addEventListener('click', async () => {
+    const entryId = document.getElementById('hiddenEntryIdForQuery').value;
+    const text = document.getElementById('inputQueryText').value.trim();
+
+    if (!text) {
+        alert('Debes ingresar un motivo para el query.');
+        return;
+    }
+
+    try {
+        // 1. Create audit query record
+        const { error: err1 } = await supabase.from('audit_queries').insert([{
+            time_entry_id: entryId,
+            author_id: State.profile.id,
+            comment: text
+        }]);
+        if (err1) throw err1;
+
+        // 2. Update time_entry status to 'queried'
+        const { error: err2 } = await supabase
+            .from('time_entries')
+            .update({ status: 'queried' })
+            .eq('id', entryId);
+        if (err2) throw err2;
+
+        document.getElementById('modalQuery').hidden = true;
+        await cargarDashboardEquipo();
+        alert('Query enviado exitosamente al subordinado.');
+
+    } catch (err) {
+        console.error("Error creating query:", err.message);
+        alert('Error al guardar query: ' + err.message);
+    }
+});
+
+
+// --- Backoffice / Catalog Management ---
+async function cargarVistaCatalogos() {
+    if (State.profile.role === 'staff') return;
+
+    const vista = document.getElementById('vistaCatalogos');
+    vista.innerHTML = `
+        <h2>Gestión de Catálogos Rápidos</h2>
+        <div style="display: flex; gap: 2rem; margin-top: 2rem;">
+
+            <div style="flex: 1; background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <h3>Nuevo Protocolo</h3>
+                <form id="formNuevoProtocolo">
+                    <div class="form-group">
+                        <label>Nombre del Protocolo (ID interno):</label>
+                        <input type="text" id="inputNombreProtocolo" required>
+                    </div>
+                    <button type="submit" class="btn-principal" style="width: auto;">Crear Protocolo</button>
+                </form>
+                <ul id="listaProtocolos" style="margin-top: 1rem; padding-left: 20px; color: #4b5563;"></ul>
+            </div>
+
+            <div style="flex: 1; background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <h3>Nueva Categoría (Restringida por Rol)</h3>
+                <form id="formNuevaCategoria">
+                    <div class="form-group">
+                        <label>Nombre de Categoría:</label>
+                        <input type="text" id="inputNombreCategoria" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Visible Para (Rol):</label>
+                        <select id="selectRoleTarget">
+                            <option value="">Todos (Global)</option>
+                            <option value="staff">Solo Staff (CRC/Data Entry)</option>
+                            <option value="manager">Solo Managers</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-principal" style="width: auto;">Crear Categoría</button>
+                </form>
+                <ul id="listaCategorias" style="margin-top: 1rem; padding-left: 20px; color: #4b5563;"></ul>
+            </div>
+
+        </div>
+    `;
+
+    // Render lists
+    renderizarListasCatalogos();
+
+    // Attach events
+    document.getElementById('formNuevoProtocolo').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nombre = document.getElementById('inputNombreProtocolo').value.trim();
+        if(!nombre) return;
+        try {
+            const { error } = await supabase.from('protocols').insert([{ name: nombre }]);
+            if (error) throw error;
+            document.getElementById('formNuevoProtocolo').reset();
+            await cargarCatalogos(); // reload state
+            renderizarListasCatalogos();
+        } catch(err) {
+            alert('Error al crear protocolo: ' + err.message);
         }
     });
 
-    return {
-        totalHoras,
-        horasEstaSemana,
-        statsPorCategoria,
-        statsPorProtocolo,
-        statsPorFecha,
-        microTareasCount,
-        microTareasHoras
+    document.getElementById('formNuevaCategoria').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nombre = document.getElementById('inputNombreCategoria').value.trim();
+        const role = document.getElementById('selectRoleTarget').value || null;
+        if(!nombre) return;
+        try {
+            const { error } = await supabase.from('categories').insert([{ name: nombre, role_target: role }]);
+            if (error) throw error;
+            document.getElementById('formNuevaCategoria').reset();
+            await cargarCatalogos(); // reload state
+            renderizarListasCatalogos();
+        } catch(err) {
+            alert('Error al crear categoría: ' + err.message);
+        }
+    });
+}
+
+function renderizarListasCatalogos() {
+    const ulProt = document.getElementById('listaProtocolos');
+    const ulCat = document.getElementById('listaCategorias');
+
+    if(ulProt) {
+        ulProt.innerHTML = '';
+        State.protocols.forEach(p => {
+            const li = document.createElement('li');
+            li.textContent = p.name;
+            ulProt.appendChild(li);
+        });
+    }
+
+    if(ulCat) {
+        ulCat.innerHTML = '';
+        State.categories.forEach(c => {
+            const li = document.createElement('li');
+            li.textContent = `${c.name} [${c.role_target || 'Global'}]`;
+            ulCat.appendChild(li);
+        });
+    }
+}
+
+// Ensure the Catalog view gets loaded when navigating
+document.getElementById('btnNavCatalogos').addEventListener('click', () => {
+    cargarVistaCatalogos();
+});
+});
+
+
+
+// Exports for testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        checkSession,
+        initializeUser,
+        configurarUIporRol,
+        escaparCSV,
+        escapeHTML,
+        crearOpcion,
+        actualizarEstadisticas,
+        State, // export state for testing if needed
+        renderizarTablaBitacora
     };
 }
-
-/**
- * Renderiza la sección del progreso del FTE Semanal.
- */
-function renderizarFTE(horasEstaSemana, metaSemanal) {
-    const inputMeta = document.getElementById('inputMetaSemanal');
-    if (inputMeta && inputMeta.value !== String(metaSemanal)) {
-        inputMeta.value = metaSemanal;
-        inputMeta.onchange = (e) => {
-            const nuevaMeta = parseInt(e.target.value) || 0;
-            localStorage.setItem('metaFTE', nuevaMeta);
-            actualizarEstadisticas();
-            mostrarToast("🎯 Meta semanal actualizada");
-        };
-    }
-
-    const barraMeta = document.getElementById('barraProgresoMeta');
-    const textoMeta = document.getElementById('textoProgresoMeta');
-    if (barraMeta && textoMeta) {
-        const porcentajeMeta = metaSemanal > 0 ? Math.min((horasEstaSemana / metaSemanal) * 100, 100) : 0;
-
-        barraMeta.style.width = `${porcentajeMeta}%`;
-        textoMeta.textContent = `${horasEstaSemana.toFixed(1)} / ${metaSemanal} horas`;
-
-        if (porcentajeMeta >= 100) {
-            barraMeta.style.backgroundColor = '#107c41'; // Verde más oscuro cuando se completa
-        } else {
-            barraMeta.style.backgroundColor = '#28a745'; // Verde estándar en progreso
-        }
-    }
-}
-
-/**
- * Renderiza los Insights (Burnout, Foco, Eficiencia).
- */
-function renderizarInsights(stats, numActividades) {
-    const insightsContainer = document.getElementById('insightsContainer');
-    if (!insightsContainer) return;
-
-    insightsContainer.innerHTML = "";
-    const insightsFragment = document.createDocumentFragment();
-
-    // Insight: Alerta de Burnout (> 10 horas en un día)
-    const fechasBurnout = Object.keys(stats.statsPorFecha).filter(fecha => stats.statsPorFecha[fecha] > 10);
-    if (fechasBurnout.length > 0) {
-        const burnoutAlert = document.createElement('div');
-        burnoutAlert.style.cssText = "background-color: #ffebee; color: #c62828; padding: 12px; border-radius: 6px; font-size: 14px; border-left: 4px solid #c62828;";
-        burnoutAlert.innerHTML = `<strong>⚠️ Alerta de Sobrecarga:</strong> Has registrado más de 10 horas en ${fechasBurnout.length} día(s). Recuerda cuidar tu bienestar.`;
-        insightsFragment.appendChild(burnoutAlert);
-    }
-
-    if (numActividades > 0) {
-        // Insight: Protocolo más intensivo
-        const protocoloTop = Object.keys(stats.statsPorProtocolo).reduce((a, b) => stats.statsPorProtocolo[a] > stats.statsPorProtocolo[b] ? a : b);
-        if (protocoloTop && protocoloTop !== "Sin Protocolo") {
-            const protocoloInsight = document.createElement('div');
-            protocoloInsight.style.cssText = "background-color: #e8f5e9; color: #2e7d32; padding: 12px; border-radius: 6px; font-size: 14px; border-left: 4px solid #2e7d32;";
-            const escProtocoloTop = escapeHTML(protocoloTop);
-            protocoloInsight.innerHTML = `<strong>💡 Foco Principal:</strong> El protocolo <em>${escProtocoloTop}</em> consumió la mayor parte de tus horas.`;
-            insightsFragment.appendChild(protocoloInsight);
-        }
-
-        // Insight: Micro-tareas
-        if (stats.microTareasCount > 0) {
-            let textoTiempo;
-            if (stats.microTareasHoras < 1) {
-                const minutosCalculados = Math.round(stats.microTareasHoras * 60);
-                textoTiempo = `${minutosCalculados} minutos totales`;
-            } else {
-                textoTiempo = `${stats.microTareasHoras.toFixed(1)} horas totales`;
-            }
-
-            const microInsight = document.createElement('div');
-            microInsight.style.cssText = "background-color: #fff3e0; color: #ef6c00; padding: 12px; border-radius: 6px; font-size: 14px; border-left: 4px solid #ef6c00;";
-            microInsight.innerHTML = `<strong>⚡ Eficiencia:</strong> Has completado ${stats.microTareasCount} micro-tareas (${textoTiempo}).`;
-            insightsFragment.appendChild(microInsight);
-        }
-    }
-
-    insightsContainer.appendChild(insightsFragment);
-}
-
-/**
- * Renderiza las barras de progreso por categoría.
- */
-function renderizarBarrasCategoria(statsPorCategoria, totalHoras) {
-    const catContenedor = document.getElementById('categoriaStats');
-    if (!catContenedor) return;
-
-    catContenedor.innerHTML = "";
-    const catFragment = document.createDocumentFragment();
-
-    Object.keys(statsPorCategoria).sort((a, b) => statsPorCategoria[b] - statsPorCategoria[a]).forEach(cat => {
-        const horas = statsPorCategoria[cat];
-        const porcentaje = totalHoras > 0 ? (horas / totalHoras * 100).toFixed(0) : 0;
-        const nombreRaw = NOMBRES_CATEGORIAS[cat] || cat;
-        const nombre = escapeHTML(nombreRaw);
-
-        const bar = document.createElement('div');
-        bar.style.marginBottom = "10px";
-        bar.innerHTML = `
-            <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 4px;">
-                <span>${nombre}</span>
-                <span>${escapeHTML(String(horas.toFixed(1)))}h (${escapeHTML(String(porcentaje))}%)</span>
-            </div>
-            <div style="background: #eee; height: 8px; border-radius: 4px; overflow: hidden;">
-                <div style="background: #0078D4; width: ${escapeHTML(String(porcentaje))}%; height: 100%;"></div>
-            </div>
-        `;
-        catFragment.appendChild(bar);
-    });
-
-    catContenedor.appendChild(catFragment);
-}
-
-/**
- * Renderiza las barras de progreso por protocolo.
- */
-function renderizarBarrasProtocolo(statsPorProtocolo, totalHoras) {
-    const protContenedor = document.getElementById('protocoloStats');
-    if (!protContenedor) return;
-
-    protContenedor.innerHTML = "";
-    const protFragment = document.createDocumentFragment();
-
-    Object.keys(statsPorProtocolo).sort((a, b) => statsPorProtocolo[b] - statsPorProtocolo[a]).forEach(prot => {
-        const horas = statsPorProtocolo[prot];
-        const porcentaje = totalHoras > 0 ? (horas / totalHoras * 100).toFixed(0) : 0;
-        const escProt = escapeHTML(prot);
-
-        const bar = document.createElement('div');
-        bar.style.marginBottom = "10px";
-        bar.innerHTML = `
-            <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 4px;">
-                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%;">${escProt}</span>
-                <span>${escapeHTML(String(horas.toFixed(1)))}h (${escapeHTML(String(porcentaje))}%)</span>
-            </div>
-            <div style="background: #eee; height: 8px; border-radius: 4px; overflow: hidden;">
-                <div style="background: #107c41; width: ${escapeHTML(String(porcentaje))}%; height: 100%;"></div>
-            </div>
-        `;
-        protFragment.appendChild(bar);
-    });
-
-    protContenedor.appendChild(protFragment);
-}
-
-function actualizarEstadisticas() {
-    let metaSemanal = parseInt(localStorage.getItem('metaFTE')) || 40;
-
-    // 1. Data Aggregation
-    const stats = calcularDatosEstadisticas(listaActividades, metaSemanal);
-
-    // Update global headers
-    const elHoras = document.getElementById('statTotalHoras');
-    const elActs = document.getElementById('statTotalActividades');
-    if (elHoras) elHoras.textContent = stats.totalHoras.toFixed(1);
-    if (elActs) elActs.textContent = listaActividades.length;
-
-    // 2. UI Rendering logic
-    renderizarFTE(stats.horasEstaSemana, metaSemanal);
-    renderizarInsights(stats, listaActividades.length);
-    renderizarBarrasCategoria(stats.statsPorCategoria, stats.totalHoras);
-    renderizarBarrasProtocolo(stats.statsPorProtocolo, stats.totalHoras);
-}
-// ==========================================
-// 7. REGISTRO DEL SERVICE WORKER (PWA)
-// ==========================================
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(registro => {
-                console.log('✅ Service Worker registrado con éxito. App lista para offline.', registro.scope);
-
-                // Lógica para detectar actualizaciones
-                registro.addEventListener('updatefound', () => {
-                    const nuevoWorker = registro.installing;
-                    if (nuevoWorker == null) {
-                        return;
-                    }
-
-                    nuevoWorker.addEventListener('statechange', () => {
-                        if (nuevoWorker.state === 'installed') {
-                            if (navigator.serviceWorker.controller) {
-                                // Hay una nueva versión lista para activarse
-                                mostrarToastActualizacion(nuevoWorker);
-                            }
-                        }
-                    });
-                });
-            })
-            .catch(error => {
-                console.error('⚠️ Error al registrar el Service Worker:', error);
-            });
-    });
-
-    // Escuchar cuando el nuevo Service Worker toma el control y recargar la página
-    let refrescando;
-    if (navigator.serviceWorker && navigator.serviceWorker.addEventListener) {
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (refrescando) return;
-            window.location.reload();
-            refrescando = true;
-        });
-    }
-}
-
-function mostrarToastActualizacion(nuevoWorker) {
-    const updateToast = document.getElementById('updateToast');
-    const btnActualizarApp = document.getElementById('btnActualizarApp');
-
-    if (updateToast && btnActualizarApp) {
-        updateToast.classList.remove('oculto');
-
-        btnActualizarApp.addEventListener('click', () => {
-            // Mandamos el mensaje al nuevo SW para que se active inmediatamente
-            nuevoWorker.postMessage('SKIP_WAITING');
-        });
-    }
-}
-
-if (typeof module !== 'undefined' && module.exports) { module.exports = { escapeHTML, escaparCSV, actualizarEstadisticas, actualizarTablaBitacora, actualizarReloj, filtrarActividades, setListaActividades: (v) => listaActividades = v, setTiempoInicio: (v) => tiempoInicio = v }; }

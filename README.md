@@ -25,3 +25,22 @@ Una aplicación web progresiva (PWA) diseñada específicamente para agilizar el
 2. Haz clic en "Instalar" (o "Añadir a la pantalla de inicio" en iOS) para usarla como una app nativa.
 3. Registra tus actividades diarias e inicia el cronómetro.
 4. Exporta tu bitácora al final del día o de la semana para sincronizarla con tu timesheet principal.
+
+---
+
+## 🚀 Versión 2.0: Backoffice & Backend (Supabase)
+
+La aplicación ahora soporta jerarquías organizacionales, dashboards de equipo y almacenamiento en la nube mediante Supabase.
+
+### 🌐 ¿Cómo ver la versión 2.0 usando GitHub Pages?
+
+1. Ve a la pestaña **Settings** (Configuración) de tu repositorio en GitHub.
+2. En el menú lateral izquierdo, haz clic en **Pages**.
+3. Bajo "Build and deployment", en la sección **Source**, selecciona `Deploy from a branch`.
+4. En **Branch**, selecciona tu rama principal (ej. `main` o esta misma rama del PR) y la carpeta `/ (root)`.
+5. Haz clic en **Save**. En un par de minutos, GitHub te dará un enlace (ej. `https://[tu-usuario].github.io/[repositorio]`) donde podrás ver la app v2.0 funcionando y conectada a tu base de datos Supabase en la nube.
+
+### 🕰️ ¿Dónde está la versión 1.x (Legacy sin conexión)?
+
+La versión antigua puramente local (IndexedDB offline) ha sido guardada y preservada en una rama separada llamada **`v1-legacy`**.
+Para verla en GitHub, simplemente haz clic en el botón desplegable de ramas (donde dice `main`) en la página principal del repositorio y selecciona `v1-legacy`. Ahí estará el código intacto de la versión 1.x.

@@ -1,7 +1,3 @@
-## 2025-03-05 - Optimize render loop in actualizarTablaBitacora
-**Learning:** Found an O(N^2) complexity issue inside the `actividadesFiltradas.slice().reverse().forEach` loop caused by calling `listaActividades.findIndex(a => a.id === actividad.id)` to compute `indexOriginal` for every element rendered in the template.
-**Action:** Removed `indexOriginal` from the `fila.innerHTML` rendering loop completely. Updated `cargarParaEditar(id)` and `eliminarRegistro(id)` to dynamically lookup the index via `findIndex(a => a.id === id)` only when the user explicitly clicks the edit or delete buttons. This makes the render loop $O(N)$ and improved rendering performance by ~37x on a 15,000 element dataset.
-
-## 2025-03-05 - Optimize render loop in actualizarTablaBitacora
-**Learning:** Found an O(N^2) complexity issue inside the `actividadesFiltradas.slice().reverse().forEach` loop caused by calling `listaActividades.findIndex(a => a.id === actividad.id)` to compute `indexOriginal` for every element rendered in the template.
-**Action:** Removed `indexOriginal` from the `fila.innerHTML` rendering loop completely. Updated `cargarParaEditar(id)` and `eliminarRegistro(id)` to dynamically lookup the index via `findIndex(a => a.id === id)` only when the user explicitly clicks the edit or delete buttons. This makes the render loop $O(N)$ and improved rendering performance by ~37x on a 15,000 element dataset.
+## 2024-05-14 - Optimized KPI Dashboard Calculation (O(N) single pass)
+**Learning:** Initial iterations might require multiple `.filter` or `.reduce` passes over arrays to extract different sum metrics (e.g., pending hours vs. approved hours). This iterates the entire array N times. By combining the calculation in a single `.forEach` loop, we reduce iterations to just O(N) regardless of how many metrics we need.
+**Action:** Implemented a single `forEach` loop in `renderizarKPIsEquipo` to calculate `totalPending`, `totalApproved`, and `totalQueried` in one pass before computing percentages.
