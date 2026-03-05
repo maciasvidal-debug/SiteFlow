@@ -1,3 +1,6 @@
 ## 2026-03-05 - Fix XSS in Protocol and Category Stats Bars
 **Learning:** Even when user-controlled data is expected to be numeric (like hours or percentages), if it is stored in IndexedDB and subsequently interpolated directly into `innerHTML`, it can serve as a vector for Cross-Site Scripting (XSS) if client-side validation is bypassed. The `escapeHTML` utility should strictly be applied to all such dynamic data before DOM insertion.
 **Action:** Wrapped `horas.toFixed(1)` and `porcentaje` with `escapeHTML(String(...))` in both Category and Protocol statistics rendering loops within `app.js` to prevent malicious scripts from being executed via these fields.
+## 2024-05-30 - Add unit tests for `escapeHTML` and fix behavior on falsy values
+**Learning:** Explicitly testing edge cases such as `0` and `false` revealed that `!str` evaluation inadvertently returned an empty string for valid numeric/boolean inputs that needed escaping. Ensuring comprehensive test coverage directly exposed this subtle bug which otherwise could lead to data loss or unexpected empty fields in UI rendering.
+**Action:** Modified `escapeHTML` to explicitly check `if (str === null || str === undefined || str === '') return '';` instead of `if (!str)`. Added tests to ensure `0`, `false`, and `true` correctly map to their string variants.

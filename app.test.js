@@ -197,3 +197,60 @@ describe('escaparCSV', () => {
         expect(app.escaparCSV('=A1+B1,C1')).toBe('"\'=A1+B1,C1"');
     });
 });
+
+describe('escapeHTML', () => {
+    let app;
+
+    beforeEach(() => {
+        // Mock IndexedDB
+        global.indexedDB = {
+            open: jest.fn().mockReturnValue({
+                onupgradeneeded: null,
+                onsuccess: null,
+                onerror: null
+            })
+        };
+
+        // Mock Navigator and Service Worker
+        global.navigator.serviceWorker = {
+            register: jest.fn().mockResolvedValue({})
+        };
+
+        // Require app.js
+        jest.isolateModules(() => {
+            app = require('./app.js');
+        });
+    });
+
+    test('should return empty string for null, undefined, or empty string', () => {
+        expect(app.escapeHTML(null)).toBe('');
+        expect(app.escapeHTML(undefined)).toBe('');
+        expect(app.escapeHTML('')).toBe('');
+    });
+
+    test('should return unchanged string for normal alphanumeric values', () => {
+        expect(app.escapeHTML('Hola123')).toBe('Hola123');
+        expect(app.escapeHTML('This is a test')).toBe('This is a test');
+    });
+
+    test('should correctly convert specific HTML characters', () => {
+        expect(app.escapeHTML('&')).toBe('&amp;');
+        expect(app.escapeHTML('<')).toBe('&lt;');
+        expect(app.escapeHTML('>')).toBe('&gt;');
+        expect(app.escapeHTML('"')).toBe('&quot;');
+        expect(app.escapeHTML("'")).toBe('&#039;');
+    });
+
+    test('should safely handle and convert full XSS payloads', () => {
+        const xssPayload = `<script>alert("XSS & 'XSS'")</script>`;
+        const expected = `&lt;script&gt;alert(&quot;XSS &amp; &#039;XSS&#039;&quot;)&lt;/script&gt;`;
+        expect(app.escapeHTML(xssPayload)).toBe(expected);
+    });
+
+    test('should stringify non-string inputs like numbers before escaping', () => {
+        expect(app.escapeHTML(123)).toBe('123');
+        expect(app.escapeHTML(0)).toBe('0');
+        expect(app.escapeHTML(false)).toBe('false');
+        expect(app.escapeHTML(true)).toBe('true');
+    });
+});

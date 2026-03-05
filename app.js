@@ -730,7 +730,7 @@ botonExportar.addEventListener('click', () => {
 // ==========================================
 
 function escapeHTML(str) {
-    if (!str) return '';
+    if (str === null || str === undefined || str === '') return '';
     return String(str)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -1063,4 +1063,4 @@ function mostrarToastActualizacion(nuevoWorker) {
     }
 }
 
-if (typeof module !== 'undefined' && module.exports) { module.exports = { escaparCSV, actualizarEstadisticas, actualizarTablaBitacora, actualizarReloj, filtrarActividades, setListaActividades: (v) => listaActividades = v, setTiempoInicio: (v) => tiempoInicio = v }; }
+if (typeof module !== 'undefined' && module.exports) { module.exports = { escapeHTML, escaparCSV, actualizarEstadisticas, actualizarTablaBitacora, actualizarReloj, filtrarActividades, setListaActividades: (v) => listaActividades = v, setTiempoInicio: (v) => tiempoInicio = v }; }
