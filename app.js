@@ -775,47 +775,39 @@ function actualizarDatalistProtocolos() {
 actualizarDatalistProtocolos();
 actualizarPlantillas();
 
-function actualizarEstadisticas() {
-    const totalHoras = listaActividades.reduce((sum, act) => sum + (parseFloat(act.horas) || 0), 0);
-    const elHoras = document.getElementById('statTotalHoras');
-    const elActs = document.getElementById('statTotalActividades');
-    if (elHoras) elHoras.textContent = totalHoras.toFixed(1);
-    if (elActs) elActs.textContent = listaActividades.length;
-
-    // Lógica FTE Semanal
-    const inputMeta = document.getElementById('inputMetaSemanal');
-    let metaSemanal = parseInt(localStorage.getItem('metaFTE')) || 40;
-    if (inputMeta) {
-        inputMeta.value = metaSemanal;
-        inputMeta.onchange = (e) => {
-            const nuevaMeta = parseInt(e.target.value) || 0;
-            localStorage.setItem('metaFTE', nuevaMeta);
-            actualizarEstadisticas();
-            mostrarToast("🎯 Meta semanal actualizada");
-        };
-    }
-
-    const hoy = new Date();
-    // Ajustar para que la semana empiece en Lunes (0=Dom, 1=Lun)
-    const diaDeLaSemana = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1;
-    const lunes = new Date(hoy);
-    lunes.setDate(hoy.getDate() - diaDeLaSemana);
-    lunes.setHours(0,0,0,0);
-
-    const domingo = new Date(lunes);
-    domingo.setDate(lunes.getDate() + 6);
-    domingo.setHours(23,59,59,999);
-
+/**
+ * Calcula todas las estadísticas necesarias de forma centralizada.
+ * @param {Array} actividades - Lista de actividades a procesar
+ * @param {number} metaSemanal - Meta de horas semanales
+ * @returns {Object} Datos estadísticos agregados
+ */
+function calcularDatosEstadisticas(actividades, metaSemanal) {
+    let totalHoras = 0;
     let horasEstaSemana = 0;
-
     const statsPorCategoria = {};
     const statsPorProtocolo = {};
     const statsPorFecha = {};
     let microTareasCount = 0;
     let microTareasHoras = 0;
 
-    listaActividades.forEach(act => {
+    // Usar formato ISO para comparación eficiente sin instanciar Date en el bucle
+    const hoy = new Date();
+    const diaDeLaSemana = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1;
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() - diaDeLaSemana);
+    lunes.setHours(0, 0, 0, 0);
+
+    const domingo = new Date(lunes);
+    domingo.setDate(lunes.getDate() + 6);
+    domingo.setHours(23, 59, 59, 999);
+
+    // Convert to simple ISO string format YYYY-MM-DD for fast comparison
+    const isoLunes = lunes.toISOString().split('T')[0];
+    const isoDomingo = domingo.toISOString().split('T')[0];
+
+    actividades.forEach(act => {
         const horasAct = parseFloat(act.horas) || 0;
+        totalHoras += horasAct;
 
         // Acumular por categoría
         statsPorCategoria[act.categoria] = (statsPorCategoria[act.categoria] || 0) + horasAct;
@@ -834,13 +826,38 @@ function actualizarEstadisticas() {
         }
 
         // Calcular horas FTE semanal
-        const fechaAct = new Date(act.fecha + "T12:00:00"); // Medio día para evitar problemas de TZ
-        if (fechaAct >= lunes && fechaAct <= domingo) {
+        // Using string comparison instead of creating Date objects
+        if (act.fecha >= isoLunes && act.fecha <= isoDomingo) {
             horasEstaSemana += horasAct;
         }
     });
 
-    // Actualizar UI del FTE Tracker
+    return {
+        totalHoras,
+        horasEstaSemana,
+        statsPorCategoria,
+        statsPorProtocolo,
+        statsPorFecha,
+        microTareasCount,
+        microTareasHoras
+    };
+}
+
+/**
+ * Renderiza la sección del progreso del FTE Semanal.
+ */
+function renderizarFTE(horasEstaSemana, metaSemanal) {
+    const inputMeta = document.getElementById('inputMetaSemanal');
+    if (inputMeta && inputMeta.value !== String(metaSemanal)) {
+        inputMeta.value = metaSemanal;
+        inputMeta.onchange = (e) => {
+            const nuevaMeta = parseInt(e.target.value) || 0;
+            localStorage.setItem('metaFTE', nuevaMeta);
+            actualizarEstadisticas();
+            mostrarToast("🎯 Meta semanal actualizada");
+        };
+    }
+
     const barraMeta = document.getElementById('barraProgresoMeta');
     const textoMeta = document.getElementById('textoProgresoMeta');
     if (barraMeta && textoMeta) {
@@ -855,110 +872,141 @@ function actualizarEstadisticas() {
             barraMeta.style.backgroundColor = '#28a745'; // Verde estándar en progreso
         }
     }
-
-    // 1. Renderizar Insights
-    const insightsContainer = document.getElementById('insightsContainer');
-    if (insightsContainer) {
-        insightsContainer.innerHTML = "";
-        const insightsFragment = document.createDocumentFragment();
-
-        // Insight: Alerta de Burnout (> 10 horas en un día)
-        const fechasBurnout = Object.keys(statsPorFecha).filter(fecha => statsPorFecha[fecha] > 10);
-        if (fechasBurnout.length > 0) {
-            const burnoutAlert = document.createElement('div');
-            burnoutAlert.style.cssText = "background-color: #ffebee; color: #c62828; padding: 12px; border-radius: 6px; font-size: 14px; border-left: 4px solid #c62828;";
-            burnoutAlert.innerHTML = `<strong>⚠️ Alerta de Sobrecarga:</strong> Has registrado más de 10 horas en ${fechasBurnout.length} día(s). Recuerda cuidar tu bienestar.`;
-            insightsFragment.appendChild(burnoutAlert);
-        }
-
-        if (listaActividades.length > 0) {
-            // Insight: Protocolo más intensivo
-            const protocoloTop = Object.keys(statsPorProtocolo).reduce((a, b) => statsPorProtocolo[a] > statsPorProtocolo[b] ? a : b);
-            if (protocoloTop && protocoloTop !== "Sin Protocolo") {
-                const protocoloInsight = document.createElement('div');
-                protocoloInsight.style.cssText = "background-color: #e8f5e9; color: #2e7d32; padding: 12px; border-radius: 6px; font-size: 14px; border-left: 4px solid #2e7d32;";
-                // Security Fix: Wrap user input with escapeHTML to prevent XSS
-                const escProtocoloTop = escapeHTML(protocoloTop);
-                protocoloInsight.innerHTML = `<strong>💡 Foco Principal:</strong> El protocolo <em>${escProtocoloTop}</em> consumió la mayor parte de tus horas.`;
-                insightsFragment.appendChild(protocoloInsight);
-            }
-
-            // Insight: Micro-tareas
-            if (microTareasCount > 0) {
-                // Formateo inteligente del tiempo de micro-tareas
-                let textoTiempo;
-                if (microTareasHoras < 1) {
-                    const minutosCalculados = Math.round(microTareasHoras * 60);
-                    textoTiempo = `${minutosCalculados} minutos totales`;
-                } else {
-                    textoTiempo = `${microTareasHoras.toFixed(1)} horas totales`;
-                }
-
-                const microInsight = document.createElement('div');
-                microInsight.style.cssText = "background-color: #fff3e0; color: #ef6c00; padding: 12px; border-radius: 6px; font-size: 14px; border-left: 4px solid #ef6c00;";
-                microInsight.innerHTML = `<strong>⚡ Eficiencia:</strong> Has completado ${microTareasCount} micro-tareas (${textoTiempo}).`;
-                insightsFragment.appendChild(microInsight);
-            }
-        }
-
-        insightsContainer.appendChild(insightsFragment);
-    }
-
-// 2. Renderizar Barras por Categoría
-    const catContenedor = document.getElementById('categoriaStats');
-    if (catContenedor) {
-        catContenedor.innerHTML = "";
-        const catFragment = document.createDocumentFragment();
-        Object.keys(statsPorCategoria).sort((a, b) => statsPorCategoria[b] - statsPorCategoria[a]).forEach(cat => {
-            const horas = statsPorCategoria[cat];
-            const porcentaje = totalHoras > 0 ? (horas / totalHoras * 100).toFixed(0) : 0;
-            const nombreRaw = NOMBRES_CATEGORIAS[cat] || cat;
-            const nombre = escapeHTML(nombreRaw);
-
-            const bar = document.createElement('div');
-            bar.style.marginBottom = "10px";
-            bar.innerHTML = `
-                <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 4px;">
-                    <span>${nombre}</span>
-                    <span>${escapeHTML(String(horas.toFixed(1)))}h (${escapeHTML(String(porcentaje))}%)</span>
-                </div>
-                <div style="background: #eee; height: 8px; border-radius: 4px; overflow: hidden;">
-                    <div style="background: #0078D4; width: ${escapeHTML(String(porcentaje))}%; height: 100%;"></div>
-                </div>
-            `;
-            catFragment.appendChild(bar);
-        });
-        catContenedor.appendChild(catFragment);
-    }
-
-    // 3. Renderizar Barras por Protocolo
-    const protContenedor = document.getElementById('protocoloStats');
-    if (protContenedor) {
-        protContenedor.innerHTML = "";
-        const protFragment = document.createDocumentFragment();
-        Object.keys(statsPorProtocolo).sort((a, b) => statsPorProtocolo[b] - statsPorProtocolo[a]).forEach(prot => {
-            const horas = statsPorProtocolo[prot];
-            const porcentaje = totalHoras > 0 ? (horas / totalHoras * 100).toFixed(0) : 0;
-
-            const bar = document.createElement('div');
-            bar.style.marginBottom = "10px";
-            // Sanitización para prevenir XSS
-            const escProt = escapeHTML(prot);
-            bar.innerHTML = `
-                <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 4px;">
-                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%;">${escProt}</span>
-                    <span>${escapeHTML(String(horas.toFixed(1)))}h (${escapeHTML(String(porcentaje))}%)</span>
-                </div>
-                <div style="background: #eee; height: 8px; border-radius: 4px; overflow: hidden;">
-                    <div style="background: #107c41; width: ${escapeHTML(String(porcentaje))}%; height: 100%;"></div>
-                </div>
-            `;
-            protFragment.appendChild(bar);
-        });
-        protContenedor.appendChild(protFragment);
-    }
 }
 
+/**
+ * Renderiza los Insights (Burnout, Foco, Eficiencia).
+ */
+function renderizarInsights(stats, numActividades) {
+    const insightsContainer = document.getElementById('insightsContainer');
+    if (!insightsContainer) return;
+
+    insightsContainer.innerHTML = "";
+    const insightsFragment = document.createDocumentFragment();
+
+    // Insight: Alerta de Burnout (> 10 horas en un día)
+    const fechasBurnout = Object.keys(stats.statsPorFecha).filter(fecha => stats.statsPorFecha[fecha] > 10);
+    if (fechasBurnout.length > 0) {
+        const burnoutAlert = document.createElement('div');
+        burnoutAlert.style.cssText = "background-color: #ffebee; color: #c62828; padding: 12px; border-radius: 6px; font-size: 14px; border-left: 4px solid #c62828;";
+        burnoutAlert.innerHTML = `<strong>⚠️ Alerta de Sobrecarga:</strong> Has registrado más de 10 horas en ${fechasBurnout.length} día(s). Recuerda cuidar tu bienestar.`;
+        insightsFragment.appendChild(burnoutAlert);
+    }
+
+    if (numActividades > 0) {
+        // Insight: Protocolo más intensivo
+        const protocoloTop = Object.keys(stats.statsPorProtocolo).reduce((a, b) => stats.statsPorProtocolo[a] > stats.statsPorProtocolo[b] ? a : b);
+        if (protocoloTop && protocoloTop !== "Sin Protocolo") {
+            const protocoloInsight = document.createElement('div');
+            protocoloInsight.style.cssText = "background-color: #e8f5e9; color: #2e7d32; padding: 12px; border-radius: 6px; font-size: 14px; border-left: 4px solid #2e7d32;";
+            const escProtocoloTop = escapeHTML(protocoloTop);
+            protocoloInsight.innerHTML = `<strong>💡 Foco Principal:</strong> El protocolo <em>${escProtocoloTop}</em> consumió la mayor parte de tus horas.`;
+            insightsFragment.appendChild(protocoloInsight);
+        }
+
+        // Insight: Micro-tareas
+        if (stats.microTareasCount > 0) {
+            let textoTiempo;
+            if (stats.microTareasHoras < 1) {
+                const minutosCalculados = Math.round(stats.microTareasHoras * 60);
+                textoTiempo = `${minutosCalculados} minutos totales`;
+            } else {
+                textoTiempo = `${stats.microTareasHoras.toFixed(1)} horas totales`;
+            }
+
+            const microInsight = document.createElement('div');
+            microInsight.style.cssText = "background-color: #fff3e0; color: #ef6c00; padding: 12px; border-radius: 6px; font-size: 14px; border-left: 4px solid #ef6c00;";
+            microInsight.innerHTML = `<strong>⚡ Eficiencia:</strong> Has completado ${stats.microTareasCount} micro-tareas (${textoTiempo}).`;
+            insightsFragment.appendChild(microInsight);
+        }
+    }
+
+    insightsContainer.appendChild(insightsFragment);
+}
+
+/**
+ * Renderiza las barras de progreso por categoría.
+ */
+function renderizarBarrasCategoria(statsPorCategoria, totalHoras) {
+    const catContenedor = document.getElementById('categoriaStats');
+    if (!catContenedor) return;
+
+    catContenedor.innerHTML = "";
+    const catFragment = document.createDocumentFragment();
+
+    Object.keys(statsPorCategoria).sort((a, b) => statsPorCategoria[b] - statsPorCategoria[a]).forEach(cat => {
+        const horas = statsPorCategoria[cat];
+        const porcentaje = totalHoras > 0 ? (horas / totalHoras * 100).toFixed(0) : 0;
+        const nombreRaw = NOMBRES_CATEGORIAS[cat] || cat;
+        const nombre = escapeHTML(nombreRaw);
+
+        const bar = document.createElement('div');
+        bar.style.marginBottom = "10px";
+        bar.innerHTML = `
+            <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 4px;">
+                <span>${nombre}</span>
+                <span>${escapeHTML(String(horas.toFixed(1)))}h (${escapeHTML(String(porcentaje))}%)</span>
+            </div>
+            <div style="background: #eee; height: 8px; border-radius: 4px; overflow: hidden;">
+                <div style="background: #0078D4; width: ${escapeHTML(String(porcentaje))}%; height: 100%;"></div>
+            </div>
+        `;
+        catFragment.appendChild(bar);
+    });
+
+    catContenedor.appendChild(catFragment);
+}
+
+/**
+ * Renderiza las barras de progreso por protocolo.
+ */
+function renderizarBarrasProtocolo(statsPorProtocolo, totalHoras) {
+    const protContenedor = document.getElementById('protocoloStats');
+    if (!protContenedor) return;
+
+    protContenedor.innerHTML = "";
+    const protFragment = document.createDocumentFragment();
+
+    Object.keys(statsPorProtocolo).sort((a, b) => statsPorProtocolo[b] - statsPorProtocolo[a]).forEach(prot => {
+        const horas = statsPorProtocolo[prot];
+        const porcentaje = totalHoras > 0 ? (horas / totalHoras * 100).toFixed(0) : 0;
+        const escProt = escapeHTML(prot);
+
+        const bar = document.createElement('div');
+        bar.style.marginBottom = "10px";
+        bar.innerHTML = `
+            <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 4px;">
+                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%;">${escProt}</span>
+                <span>${escapeHTML(String(horas.toFixed(1)))}h (${escapeHTML(String(porcentaje))}%)</span>
+            </div>
+            <div style="background: #eee; height: 8px; border-radius: 4px; overflow: hidden;">
+                <div style="background: #107c41; width: ${escapeHTML(String(porcentaje))}%; height: 100%;"></div>
+            </div>
+        `;
+        protFragment.appendChild(bar);
+    });
+
+    protContenedor.appendChild(protFragment);
+}
+
+function actualizarEstadisticas() {
+    let metaSemanal = parseInt(localStorage.getItem('metaFTE')) || 40;
+
+    // 1. Data Aggregation
+    const stats = calcularDatosEstadisticas(listaActividades, metaSemanal);
+
+    // Update global headers
+    const elHoras = document.getElementById('statTotalHoras');
+    const elActs = document.getElementById('statTotalActividades');
+    if (elHoras) elHoras.textContent = stats.totalHoras.toFixed(1);
+    if (elActs) elActs.textContent = listaActividades.length;
+
+    // 2. UI Rendering logic
+    renderizarFTE(stats.horasEstaSemana, metaSemanal);
+    renderizarInsights(stats, listaActividades.length);
+    renderizarBarrasCategoria(stats.statsPorCategoria, stats.totalHoras);
+    renderizarBarrasProtocolo(stats.statsPorProtocolo, stats.totalHoras);
+}
 // ==========================================
 // 7. REGISTRO DEL SERVICE WORKER (PWA)
 // ==========================================
