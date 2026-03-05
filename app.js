@@ -490,19 +490,16 @@ function actualizarTablaBitacora() {
         const indexOriginal = listaActividades.findIndex(a => a.id === actividad.id);
         const fila = document.createElement('tr');
         const nombreCategoriaRaw = nombresCategorias[actividad.categoria] || actividad.categoria;
-        const nombreCategoria = escapeHTML(nombreCategoriaRaw);
-        const escProtocolo = escapeHTML(actividad.protocolo || "-");
-        const escDescripcion = escapeHTML(actividad.descripcion);
 
         // Sanitización para prevenir XSS
         const escProtocolo = escapeHTML(actividad.protocolo || "-");
-        const escCategoria = escapeHTML(nombreCategoria);
+        const escCategoria = escapeHTML(nombreCategoriaRaw);
         const escDescripcion = escapeHTML(actividad.descripcion);
 
         fila.innerHTML = `
             <td>${actividad.fecha}</td>
             <td>${escProtocolo}</td>
-            <td>${nombreCategoria}</td>
+            <td>${escCategoria}</td>
             <td>${escDescripcion}</td>
             <td><strong>${actividad.horas}</strong></td>
             <td>
@@ -936,7 +933,6 @@ function actualizarEstadisticas() {
         Object.keys(statsPorProtocolo).sort((a, b) => statsPorProtocolo[b] - statsPorProtocolo[a]).forEach(prot => {
             const horas = statsPorProtocolo[prot];
             const porcentaje = totalHoras > 0 ? (horas / totalHoras * 100).toFixed(0) : 0;
-            const escProt = escapeHTML(prot);
 
             const bar = document.createElement('div');
             bar.style.marginBottom = "10px";
@@ -1012,3 +1008,5 @@ function mostrarToastActualizacion(nuevoWorker) {
         });
     }
 }
+
+if (typeof module !== 'undefined' && module.exports) { module.exports = { escaparCSV, actualizarEstadisticas, actualizarTablaBitacora, actualizarReloj, setListaActividades: (v) => listaActividades = v, setTiempoInicio: (v) => tiempoInicio = v }; }
