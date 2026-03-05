@@ -12,3 +12,6 @@
 **Vulnerability:** Date input fields were stored in IndexedDB and subsequently injected directly into `innerHTML` without escaping, assuming dates are inherently safe.
 **Learning:** Client-side input types (e.g., `<input type="date">`) enforce zero data integrity or security guarantees. Attackers can trivially modify input attributes (e.g., changing `type="date"` to `type="text"`) via DevTools to submit arbitrary JavaScript payloads. If these are saved (Stored XSS) and rendered unescaped, it results in critical vulnerabilities.
 **Prevention:** Never trust ANY user input regardless of the client-side input field type. Always sanitize or escape (e.g., `escapeHTML`) EVERY piece of user-controlled data before inserting it into the DOM via methods like `innerHTML`.
+## 2024-05-24 - Cross-Site Scripting (XSS) in Activity Table
+**Learning:** Even fields that are generally assumed to contain safe, specific data types (like numbers for 'horas') can be exploited if they are rendered directly into the DOM using `innerHTML` and the data originates from a storage mechanism (like IndexedDB) that a malicious actor might manipulate directly, bypassing client-side validation.
+**Action:** Applied the `escapeHTML` sanitization function to the `actividad.horas` field before interpolation into the HTML template string for the activity table.
