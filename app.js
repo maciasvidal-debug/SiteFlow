@@ -453,15 +453,15 @@ function renderizarTablaBitacora(entries) {
             if(cat) categoriaName = escapeHTML(cat.name);
         }
 
-        const tiempoFmt = `${entry.hours}h ${entry.minutes}m`;
+        const tiempoFmt = `${escapeHTML(entry.hours)}h ${escapeHTML(entry.minutes)}m`;
 
-        const spanStatus = `<span class="status-badge status-${entry.status}">${escapeHTML(entry.status)}</span>`;
+        const spanStatus = `<span class="status-badge status-${escapeHTML(entry.status)}">${escapeHTML(entry.status)}</span>`;
 
         // Actions
         let accionesHtml = '';
         if (entry.status === 'pending' || entry.status === 'queried') {
              accionesHtml = `
-                <button class="btn-secundario btn-accion" onclick="editarRegistro('${entry.id}')">Editar</button>
+                <button class="btn-secundario btn-accion btn-editar" data-id="${escapeHTML(entry.id)}">Editar</button>
              `;
         } else {
              accionesHtml = `<span style="font-size: 0.8em; color: gray;">Bloqueado</span>`;
@@ -480,6 +480,13 @@ function renderizarTablaBitacora(entries) {
     });
 
     tbody.appendChild(fragment);
+
+    document.querySelectorAll('.btn-editar').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.getAttribute('data-id') || e.target.closest('.btn-editar').getAttribute('data-id');
+            editarRegistro(id);
+        });
+    });
 }
 
 function editarRegistro(id) {
@@ -682,14 +689,14 @@ function renderizarTablaAuditoria(entries) {
         const nombre = entry.profiles ? `${escapeHTML(entry.profiles.first_name)} ${escapeHTML(entry.profiles.last_name)}` : 'Usuario Desconocido';
         const fecha = escapeHTML(entry.date);
         const actividad = entry.activities ? escapeHTML(entry.activities.name) : 'N/A';
-        const tiempo = `${entry.total_hours} h`;
-        const spanStatus = `<span class="status-badge status-${entry.status}">${escapeHTML(entry.status)}</span>`;
+        const tiempo = `${escapeHTML(entry.total_hours)} h`;
+        const spanStatus = `<span class="status-badge status-${escapeHTML(entry.status)}">${escapeHTML(entry.status)}</span>`;
 
         let acciones = '';
         if (entry.status === 'pending') {
             acciones = `
-                <button class="btn-principal btn-accion" onclick="aprobarRegistro('${entry.id}')">Aprobar</button>
-                <button class="btn-peligro btn-accion" onclick="abrirModalQuery('${entry.id}')">Query</button>
+                <button class="btn-principal btn-accion btn-aprobar-auditoria" data-id="${escapeHTML(entry.id)}">Aprobar</button>
+                <button class="btn-peligro btn-accion btn-rechazar-auditoria" data-id="${escapeHTML(entry.id)}">Query</button>
             `;
         } else if (entry.status === 'queried') {
             acciones = `<span style="font-size: 0.8em; color: var(--error-color);">Esperando corrección</span>`;
@@ -709,6 +716,20 @@ function renderizarTablaAuditoria(entries) {
     });
 
     tbody.appendChild(fragment);
+
+    document.querySelectorAll('.btn-aprobar-auditoria').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.getAttribute('data-id') || e.target.closest('.btn-aprobar-auditoria').getAttribute('data-id');
+            aprobarRegistro(id);
+        });
+    });
+
+    document.querySelectorAll('.btn-rechazar-auditoria').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.getAttribute('data-id') || e.target.closest('.btn-rechazar-auditoria').getAttribute('data-id');
+            abrirModalQuery(id);
+        });
+    });
 }
 
 function renderizarKPIsEquipo(entries) {
