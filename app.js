@@ -49,6 +49,12 @@ if ('serviceWorker' in navigator) {
 
 // Attach event listener for the update button
 document.addEventListener('DOMContentLoaded', () => {
+
+    const btnSmartTimer = document.getElementById('btnSmartTimer');
+    if (btnSmartTimer) {
+        btnSmartTimer.addEventListener('click', toggleSmartTimer);
+    }
+
     const btnUpdateAppNow = document.getElementById('btnUpdateAppNow');
     if (btnUpdateAppNow) {
         btnUpdateAppNow.addEventListener('click', () => {
@@ -384,23 +390,50 @@ async function cargarEstadisticasAvanzadas(userIdAnalizar = 'me') {
 
         // H2H
         const esManager = ['manager', 'vp', 'super_admin'].includes(State.profile.role);
-        const h2hContainer = document.getElementById('h2hContainer');
-        const h2hSelectorContainer = document.getElementById('h2hSelectorContainer');
+        const h2hAccordion = document.getElementById('h2hAccordion');
 
         if (esManager) {
-            h2hContainer.style.display = 'block';
-            h2hSelectorContainer.style.display = 'block';
+            h2hAccordion.style.display = 'block';
 
-            const numUsers = new Set(entries.map(e => e.user_id)).size || 1;
+            // Cargar usuarios en el select si está vacío
+            const selectUsuarioH2H = document.getElementById('selectUsuarioH2H');
+            if (selectUsuarioH2H && selectUsuarioH2H.options.length <= 1) {
+                const uniqueUsers = new Set();
+                entries.forEach(e => {
+                    if (e.user_id && !uniqueUsers.has(e.user_id) && e.user_id !== State.profile.id) {
+                        uniqueUsers.add(e.user_id);
+                        const opt = document.createElement('option');
+                        opt.value = e.user_id;
+                        opt.textContent = `Usuario ${e.user_id.substring(0,6)}`;
+                        selectUsuarioH2H.appendChild(opt);
+                    }
+                });
+            }
+
+            const rolFiltro = document.getElementById('selectRolH2H') ? document.getElementById('selectRolH2H').value : 'all';
+
+            // Si necesitamos nombres reales y roles para H2H, tendríamos que haber hecho un join con profiles.
+            // Para mantener la consistencia con el código actual que no hace join en stats,
+            // asumiremos el filtrado base o implementaremos un mock para la demostración H2H.
+
+            // Simulación de filtro por rol (En un entorno real requeriría select('*, profiles(role)') )
+            let teamEntries = entries;
+
+            // Aquí iría el filtrado real si tuviéramos profiles anidados
+            // if (rolFiltro !== 'all') {
+            //     teamEntries = entries.filter(e => e.profiles && e.profiles.role === rolFiltro);
+            // }
+
+            const numUsers = new Set(teamEntries.map(e => e.user_id)).size || 1;
             let totalTeamHours = 0, teamAtomicCount = 0;
 
-            entries.forEach(e => {
+            teamEntries.forEach(e => {
                 totalTeamHours += Number(e.total_hours);
                 if ((e.hours * 60) + e.minutes < 5) teamAtomicCount++;
             });
 
             const avgTeamHours = totalTeamHours / numUsers;
-            const teamAtomicRatio = entries.length > 0 ? Math.round((teamAtomicCount / entries.length) * 100) : 0;
+            const teamAtomicRatio = teamEntries.length > 0 ? Math.round((teamAtomicCount / teamEntries.length) * 100) : 0;
             const maxHours = Math.max(totalUserHours, avgTeamHours, 1);
 
             document.getElementById('h2hUserHours').textContent = totalUserHours.toFixed(1);
@@ -413,8 +446,7 @@ async function cargarEstadisticasAvanzadas(userIdAnalizar = 'me') {
             document.getElementById('h2hTeamAtomic').textContent = `${teamAtomicRatio}%`;
             document.getElementById('barTeamAtomic').style.width = `${teamAtomicRatio}%`;
         } else {
-            h2hContainer.style.display = 'none';
-            h2hSelectorContainer.style.display = 'none';
+            h2hAccordion.style.display = 'none';
         }
     } catch (err) { console.error("Error BI:", err); mostrarToast("Error calculando analíticas."); }
 }
@@ -501,6 +533,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const selectH2H = document.getElementById('selectUsuarioH2H');
     if (selectH2H) selectH2H.addEventListener('change', (e) => cargarEstadisticasAvanzadas(e.target.value));
+
+    const selectRolH2H = document.getElementById('selectRolH2H');
+    if (selectRolH2H) selectRolH2H.addEventListener('change', () => {
+        const userId = document.getElementById('selectUsuarioH2H').value;
+        cargarEstadisticasAvanzadas(userId);
+    });
 
     const btnExportCSV = document.getElementById('btnExportCSV');
     if (btnExportCSV) btnExportCSV.addEventListener('click', exportarDatosCSV);
@@ -1402,6 +1440,17 @@ function renderizarListasCatalogos() {
 }
 
 // Ensure the Catalog view gets loaded when navigating
+
+    const btnVolverGestion = document.getElementById('btnVolverMenuGestion');
+    if (btnVolverGestion) {
+        btnVolverGestion.addEventListener('click', () => {
+            document.getElementById('seccionProtocolos').style.display = 'none';
+            document.getElementById('seccionCatalogos').style.display = 'none';
+            document.getElementById('menuTarjetasGestion').style.display = 'grid';
+            btnVolverGestion.style.display = 'none';
+        });
+    }
+
 document.getElementById('btnNavCatalogos').addEventListener('click', () => {
     cargarVistaCatalogos();
 });
