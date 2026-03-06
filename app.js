@@ -192,7 +192,7 @@ function configurarUIporRol(rol) {
         if(btnNavCatalogos) btnNavCatalogos.style.display = 'flex';
         cambiarVista('vistaRegistro');
     } else {
-        // Staff role
+        // General clinical roles (CRA, CRC, Data Entry, Regulatory Affairs)
         if(btnRegistro) btnRegistro.style.display = 'flex';
         cambiarVista('vistaRegistro');
     }
@@ -560,7 +560,8 @@ function actualizarEstadisticas(entries) {
 
 // --- Dashboard & Audit Flow (Managers & Super Admins) ---
 async function cargarDashboardEquipo() {
-    if (State.profile.role === 'staff') return;
+    const managementRoles = ['super_admin', 'manager', 'vp', 'it_admin'];
+    if (!managementRoles.includes(State.profile.role)) return;
 
     try {
         // Fetch profiles in the same department (handled securely via RLS)
@@ -868,7 +869,8 @@ document.getElementById('btnSaveQuery').addEventListener('click', async () => {
 
 // --- Backoffice / Catalog Management ---
 async function cargarVistaCatalogos() {
-    if (State.profile.role === 'staff') return;
+    const managementRoles = ['super_admin', 'manager', 'vp', 'it_admin'];
+    if (!managementRoles.includes(State.profile.role)) return;
 
     try {
         // Fetch protocols

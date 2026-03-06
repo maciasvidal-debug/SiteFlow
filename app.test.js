@@ -88,6 +88,7 @@ describe('SiteFlow v2 Core Utilities', () => {
 
         afterEach(() => {
             document.body.innerHTML = '';
+            jest.clearAllTimers();
             jest.useRealTimers();
         });
 
