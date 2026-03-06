@@ -236,14 +236,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('inputPassword').value;
         const errorDiv = document.getElementById('mensajeErrorLogin');
 
-        try {
-            errorDiv.textContent = 'Iniciando sesión...';
-            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) throw error;
+        // Garantizar idempotencia: reiniciar estado a nulo visualmente, mostrando mensaje de carga temporal
+        errorDiv.textContent = 'Iniciando sesión...';
 
+        try {
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                if (error.code === 'invalid_credentials' || error.message.includes('Invalid login') || error.status === 400) {
+                    throw new Error('Usuario o contraseña inválidos');
+                }
+                throw error;
+            }
+
+            // Flujo de éxito
             errorDiv.textContent = '';
         } catch (err) {
-            errorDiv.textContent = 'Error: ' + err.message;
+            // Vincular el estado de error de forma reactiva en la UI
+            errorDiv.textContent = err.message || 'Ocurrió un error al iniciar sesión';
         }
     });
 
