@@ -1167,6 +1167,7 @@ if (typeof module !== 'undefined' && module.exports) {
         actualizarEstadisticas,
         State, // export state for testing if needed
         renderizarTablaBitacora,
-        mostrarToast
+        mostrarToast,
+        cambiarVista
     };
 }
