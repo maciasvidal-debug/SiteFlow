@@ -763,3 +763,45 @@ body.has-update-banner {
     background-color: rgba(0,0,0,0.05);
     border-color: var(--border-color);
 }
+
+/* Splash Screen */
+.splash-screen {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease-out;
+}
+.splash-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+.splash-logo {
+    width: 200px;
+    height: auto;
+    color: var(--primary-color);
+    animation: pulse 2s infinite;
+}
+.splash-loader {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--secondary-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.8; }
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.splash-screen.oculto { pointer-events: none; display: none; }

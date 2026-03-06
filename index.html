@@ -29,6 +29,21 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+<!-- Splash Screen Minimalista -->
+<div id="splashScreen" class="splash-screen">
+    <div class="splash-content">
+        <svg class="splash-logo" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g class="logo-group">
+                <circle cx="50" cy="50" r="35" stroke="currentColor" stroke-width="8" />
+                <path d="M35 50 L45 60 L65 40" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+                <text x="100" y="65" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="48" font-weight="800" fill="currentColor" letter-spacing="-0.05em">SiteFlow</text>
+            </g>
+        </svg>
+        <div class="splash-loader"></div>
+    </div>
+</div>
+
     <!-- App update notification -->
 
     <!-- App update notification banner -->
@@ -45,7 +60,15 @@
     <div id="pantallaLogin" class="container" style="display: none;">
         <header>
             <div class="logo-container">
-                <img src="siteflow-logo.png" alt="SiteFlow Logo" class="logo-img" id="logoPrincipal">
+
+<svg class="logo-svg" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width: 150px; height: auto;" id="logoPrincipal">
+    <g class="logo-group">
+        <circle cx="50" cy="50" r="35" stroke="currentColor" stroke-width="8" />
+        <path d="M35 50 L45 60 L65 40" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="100" y="65" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="48" font-weight="800" fill="currentColor" letter-spacing="-0.05em">SiteFlow</text>
+    </g>
+</svg>
+
             </div>
             <h1>Iniciar Sesión</h1>
         </header>
@@ -70,7 +93,15 @@
         <header>
             <div class="header-top">
                 <div class="logo-container">
-                    <img src="siteflow-logo.png" alt="SiteFlow Logo" class="logo-img" id="logoApp">
+
+<svg class="logo-svg" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width: 150px; height: auto;" id="logoApp">
+    <g class="logo-group">
+        <circle cx="50" cy="50" r="35" stroke="currentColor" stroke-width="8" />
+        <path d="M35 50 L45 60 L65 40" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="100" y="65" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="48" font-weight="800" fill="currentColor" letter-spacing="-0.05em">SiteFlow</text>
+    </g>
+</svg>
+
                 </div>
                 <div class="user-info">
                     <span id="userNameDisplay"></span>
@@ -217,7 +248,7 @@
                     <span style="font-size: 0.875rem; color: #6b7280; background: #f3f4f6; padding: 0.25rem 0.75rem; border-radius: 1rem;">Últimos 100</span>
                 </div>
 
-                <div class="table-container" style="background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid #e5e7eb; margin-top: 0;">
+                <div class="table-container" style="background: var(--surface-color); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid #e5e7eb; margin-top: 0;">
                     <table id="tablaAuditoria" aria-label="Tabla de auditoría de equipo">
                         <thead>
                             <tr>

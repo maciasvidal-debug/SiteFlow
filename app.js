@@ -166,11 +166,23 @@ function mostrarToast(mensaje) {
 
 // --- UI & Polymorphism ---
 function mostrarLogin() {
+    const splash = document.getElementById('splashScreen');
+    if (splash) {
+        splash.style.opacity = '0';
+        setTimeout(() => splash.classList.add('oculto'), 500);
+    }
+
     document.getElementById('pantallaLogin').style.display = 'block';
     document.getElementById('pantallaPrincipal').style.display = 'none';
 }
 
 function mostrarAppPrincipal() {
+    const splash = document.getElementById('splashScreen');
+    if (splash) {
+        splash.style.opacity = '0';
+        setTimeout(() => splash.classList.add('oculto'), 500);
+    }
+
     document.getElementById('pantallaLogin').style.display = 'none';
     document.getElementById('pantallaPrincipal').style.display = 'block';
 }
@@ -255,6 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Flujo de éxito
             errorDiv.textContent = '';
+            await cargarDatosIniciales();
+            mostrarAppPrincipal();
         } catch (err) {
             // Vincular el estado de error de forma reactiva en la UI
             errorDiv.textContent = err.message || 'Ocurrió un error al iniciar sesión';
@@ -335,7 +349,7 @@ async function cargarEstadisticasAvanzadas(userIdAnalizar = 'me') {
         hace30Dias.setDate(hace30Dias.getDate() - 30);
         const isoDate = hace30Dias.toISOString().split('T')[0];
 
-        const { data: entries, error } = await supabase
+        const { data: entries, error } = await supabaseClient
             .from('time_entries')
             .select(`id, user_id, date, protocol_id, activity_id, hours, minutes, total_hours, status, protocols ( name )`)
             .gte('date', isoDate);

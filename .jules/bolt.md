@@ -5,3 +5,6 @@
 ## 2025-03-06 - Optimized Team Dashboard Rendering
 **Learning:** Re-rendering complex DOM elements with dynamic data inside `.forEach` loops using template literal concatenation (`innerHTML +=`) triggers multiple synchronous browser reflows and repaints, severely degrading UI responsiveness on lower-end devices when lists grow large.
 **Action:** Re-wrote the `teamHtml` generation logic in `cargarDashboardEquipo` to accumulate the entire HTML structure in a memory string before applying it via a single `.innerHTML` assignment. Additionally, isolated the O(N) iteration for discovering the `maxHours` (for relative progress bar calculation) outside the DOM construction loop, achieving clean, linear rendering performance.
+## 2026-03-06 - SVG Loading Optimization
+**Learning:** Replaced the heavyweight `siteflow-logo.png` resource with an inline SVG using HTML/CSS `currentColor` scaling. This reduces the number of initial TCP connections required on cold-start and prevents Flash of Unstyled Text (FOUT) while waiting for network requests to complete, crucial for a smooth splash screen experience.
+**Action:** Substituted hardcoded img tags with dynamic inline SVG tags for `#logoPrincipal`, `#logoApp`, and `#splashScreen`.
