@@ -1486,3 +1486,46 @@ window.addEventListener('unhandledrejection', function(event) {
     console.clear();
     mostrarToast('Error de conexión o de red.', 'error');
 });
+
+// --- Smart Timer Logic ---
+let smartTimerInterval = null;
+let smartTimerSeconds = 0;
+
+function toggleSmartTimer() {
+    const btn = document.getElementById('btnSmartTimer');
+    const text = document.getElementById('textSmartTimer');
+
+    if (smartTimerInterval) {
+        clearInterval(smartTimerInterval);
+        smartTimerInterval = null;
+
+        const totalMinutes = Math.floor(smartTimerSeconds / 60);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+
+        document.getElementById('inputHoras').value = hours;
+        document.getElementById('inputMinutos').value = minutes;
+
+        text.textContent = 'Iniciar Smart Timer';
+        btn.classList.remove('btn-danger');
+        btn.classList.add('btn-secundario');
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        smartTimerSeconds = 0;
+    } else {
+        smartTimerSeconds = 0;
+        smartTimerInterval = setInterval(() => {
+            smartTimerSeconds++;
+            const m = Math.floor(smartTimerSeconds / 60).toString().padStart(2, '0');
+            const s = (smartTimerSeconds % 60).toString().padStart(2, '0');
+            text.textContent = 'Detener (' + m + ':' + s + ')';
+        }, 1000);
+
+        btn.classList.remove('btn-secundario');
+        btn.classList.add('btn-danger');
+        btn.style.background = 'var(--danger-color, #fee2e2)';
+        btn.style.color = '#b91c1c';
+        btn.style.borderColor = '#fca5a5';
+    }
+}
