@@ -971,6 +971,7 @@ if (typeof module !== 'undefined' && module.exports) {
         crearOpcion,
         actualizarEstadisticas,
         State, // export state for testing if needed
-        renderizarTablaBitacora
+        renderizarTablaBitacora,
+        cambiarVista
     };
 }
