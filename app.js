@@ -11,9 +11,12 @@ if ('serviceWorker' in navigator) {
                 nuevoWorker = reg.installing;
                 nuevoWorker.addEventListener('statechange', () => {
                     if (nuevoWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        // Show update toast
-                        const toast = document.getElementById('toastActualizacion');
-                        if(toast) toast.hidden = false;
+                        // Show update banner
+                        const updateBanner = document.getElementById('updateBannerOverlay');
+                        if (updateBanner) {
+                            updateBanner.classList.add('show');
+                            document.body.classList.add('has-update-banner');
+                        }
                     }
                 });
             });
@@ -34,13 +37,17 @@ if ('serviceWorker' in navigator) {
 
 // Attach event listener for the update button
 document.addEventListener('DOMContentLoaded', () => {
-    const btnActualizar = document.getElementById('btnActualizarApp');
-    if (btnActualizar) {
-        btnActualizar.addEventListener('click', () => {
+    const btnUpdateAppNow = document.getElementById('btnUpdateAppNow');
+    if (btnUpdateAppNow) {
+        btnUpdateAppNow.addEventListener('click', () => {
             if (nuevoWorker) {
                 nuevoWorker.postMessage({ action: 'skipWaiting' });
             }
-            document.getElementById('toastActualizacion').hidden = true;
+            const updateBanner = document.getElementById('updateBannerOverlay');
+            if(updateBanner) {
+                updateBanner.classList.remove('show');
+                document.body.classList.remove('has-update-banner');
+            }
         });
     }
 });
@@ -145,22 +152,38 @@ function mostrarAppPrincipal() {
 
 function configurarUIporRol(rol) {
     const navMenu = document.getElementById('navMenu');
+    const btnRegistro = document.querySelector('[data-target="vistaRegistro"]');
     const btnNavDashboard = document.getElementById('btnNavDashboard');
     const btnNavCatalogos = document.getElementById('btnNavCatalogos');
 
     navMenu.style.display = 'flex'; // Show navigation
 
-    if (rol === 'super_admin' || rol === 'manager') {
-        btnNavDashboard.style.display = 'inline-block';
-        btnNavCatalogos.style.display = 'inline-block';
+    // Reset all tabs to hidden initially
+    if(btnRegistro) btnRegistro.style.display = 'none';
+    if(btnNavDashboard) btnNavDashboard.style.display = 'none';
+    if(btnNavCatalogos) btnNavCatalogos.style.display = 'none';
+
+    if (rol === 'vp') {
+        // VP only reviews team dashboard
+        if(btnNavDashboard) btnNavDashboard.style.display = 'flex';
+        // Auto navigate
+        setTimeout(() => cambiarVista('vistaDashboard'), 100);
+    } else if (rol === 'it_admin') {
+        // IT Admin strictly manages catalogs
+        if(btnNavCatalogos) btnNavCatalogos.style.display = 'flex';
+        // Auto navigate
+        setTimeout(() => cambiarVista('vistaCatalogos'), 100);
+    } else if (rol === 'super_admin' || rol === 'manager') {
+        // Full access
+        if(btnRegistro) btnRegistro.style.display = 'flex';
+        if(btnNavDashboard) btnNavDashboard.style.display = 'flex';
+        if(btnNavCatalogos) btnNavCatalogos.style.display = 'flex';
+        cambiarVista('vistaRegistro');
     } else {
         // Staff role
-        btnNavDashboard.style.display = 'none';
-        btnNavCatalogos.style.display = 'none';
+        if(btnRegistro) btnRegistro.style.display = 'flex';
+        cambiarVista('vistaRegistro');
     }
-
-    // Reset view
-    cambiarVista('vistaRegistro');
 }
 
 function cambiarVista(vistaId) {
@@ -498,30 +521,118 @@ async function cargarDashboardEquipo() {
     if (State.profile.role === 'staff') return;
 
     try {
-        // Build the query to get subordinates' entries
-        let query = supabaseClient
+        // Fetch profiles in the same department (handled securely via RLS)
+        const { data: teamMembers, error: teamError } = await supabaseClient
+            .from('profiles')
+            .select('id, email, first_name, last_name, role, department')
+            .order('role', { ascending: true });
+
+        if (teamError) throw teamError;
+
+        // Fetch recent time entries for the department
+        const { data: entries, error: entriesError } = await supabaseClient
             .from('time_entries')
             .select(`
-                id, date, total_hours, status, user_id,
-                profiles!inner(first_name, last_name, role),
-                activities(name),
-                protocols(name)
+                id, date, total_hours, status, notes, user_id,
+                profiles ( email, first_name, last_name, role ),
+                activities ( name ),
+                categories ( name ),
+                protocols ( name, code )
             `)
-            .order('date', { ascending: false });
+            .order('date', { ascending: false })
+            .limit(100);
 
-        // If manager, only get staff where manager_id = this.user.id
-        // We use the auth.uid() in RLS, but we can also filter explicitly
-        if (State.profile.role === 'manager') {
-             // RLS already filters this, but just to be explicit
-             // We don't need to add explicit filters if RLS is tight.
-             query = query.neq('user_id', State.profile.id); // exclude self from audit view
+        if (entriesError) throw entriesError;
+
+        // Calculate KPIs
+        const totalHoras = entries.reduce((sum, e) => sum + e.total_hours, 0);
+        const pendingCount = entries.filter(e => e.status === 'pending').length;
+        const queriedCount = entries.filter(e => e.status === 'queried').length;
+
+        // Render Dashboard Stats Cards
+        const dashboardStats = document.getElementById('dashboardStats');
+        let htmlStats = `
+            <div class="dashboard-card">
+                <div class="dashboard-card-title">Equipo</div>
+                <div class="dashboard-card-value">${teamMembers.length}</div>
+                <div class="dashboard-card-subtext">Miembros activos</div>
+            </div>
+            <div class="dashboard-card">
+                <div class="dashboard-card-title">Horas Totales</div>
+                <div class="dashboard-card-value">${totalHoras.toFixed(2)} h</div>
+                <div class="dashboard-card-subtext">Registradas por el equipo</div>
+            </div>
+            <div class="dashboard-card">
+                <div class="dashboard-card-title">Atención Requerida</div>
+                <div class="dashboard-card-value" style="color: ${queriedCount > 0 || pendingCount > 0 ? 'var(--warning-color)' : 'var(--success-color)'};">${pendingCount + queriedCount}</div>
+                <div class="dashboard-card-subtext">${pendingCount} Pendientes / ${queriedCount} Observadas</div>
+            </div>
+        `;
+
+        // Render detailed team list
+        let teamHtml = `<div class="dashboard-card" style="grid-column: 1 / -1;"><div class="dashboard-card-title">Miembros del Departamento</div><div style="display:flex; flex-direction:column;">`;
+        teamMembers.forEach(m => {
+            const memberEmail = m.email || (m.first_name + ' ' + m.last_name);
+            const memberEntries = entries.filter(e => e.profiles && (e.profiles.email === m.email || e.profiles.first_name === m.first_name));
+            const memberHours = memberEntries.reduce((sum, e) => sum + e.total_hours, 0);
+            teamHtml += `
+                <div class="miembro-card">
+                    <div class="miembro-info">
+                        <span class="miembro-email">${escapeHTML(memberEmail)}</span>
+                        <span class="miembro-role">${escapeHTML(m.role.replace('_', ' '))}</span>
+                    </div>
+                    <div class="miembro-stats">
+                        <span style="font-weight:bold;">${memberHours.toFixed(2)}h</span><br>
+                        <span style="font-size:0.8rem; color:#6b7280;">${memberEntries.length} registros</span>
+                    </div>
+                </div>
+            `;
+        });
+        teamHtml += `</div></div>`;
+        dashboardStats.innerHTML = htmlStats + teamHtml;
+
+        // Handle Audit table if needed for manager/super_admin
+        // VP shouldn't be approving/rejecting according to rules, just reviewing
+        const cuerpoAuditoria = document.getElementById('cuerpoTablaAuditoria');
+        cuerpoAuditoria.innerHTML = '';
+
+        entries.forEach(e => {
+            if (e.user_id === State.profile.id) return; // don't show own entries in audit
+
+            const emailDisplay = escapeHTML(e.profiles?.email || 'Desconocido');
+            const actividadDisplay = escapeHTML(e.activities?.name || 'Desconocido');
+
+            let btnActions = '';
+            if(State.profile.role !== 'vp') {
+                btnActions = `
+                    <button class="btn-accion btn-aprobar" data-id="${escapeHTML(e.id)}">✅</button>
+                    <button class="btn-accion btn-rechazar" data-id="${escapeHTML(e.id)}">❌</button>
+                `;
+            }
+
+            cuerpoAuditoria.innerHTML += `
+                <tr>
+                    <td>${emailDisplay}</td>
+                    <td>${escapeHTML(e.date)}</td>
+                    <td>${actividadDisplay}</td>
+                    <td>${escapeHTML(e.total_hours)}</td>
+                    <td><span class="status-badge status-${escapeHTML(e.status.toLowerCase())}">${escapeHTML(e.status)}</span></td>
+                    <td class="acciones-celda">
+                        ${btnActions}
+                    </td>
+                </tr>
+            `;
+        });
+
+        if(State.profile.role !== 'vp') {
+            document.querySelectorAll('.btn-aprobar').forEach(btn => {
+                btn.addEventListener('click', () => aprobarRegistro(btn.dataset.id));
+            });
+
+            document.querySelectorAll('.btn-rechazar').forEach(btn => {
+                btn.addEventListener('click', () => abrirModalQuery(btn.dataset.id));
+            });
         }
-
-        const { data: teamEntries, error } = await query;
-
-
-        renderizarTablaAuditoria(teamEntries);
-        renderizarKPIsEquipo(teamEntries);
 
     } catch (err) {
         console.error("Error loading team dashboard:", err.message);
@@ -703,81 +814,73 @@ document.getElementById('btnSaveQuery').addEventListener('click', async () => {
 async function cargarVistaCatalogos() {
     if (State.profile.role === 'staff') return;
 
-    const vista = document.getElementById('vistaCatalogos');
-    vista.innerHTML = `
-        <h2>Gestión de Catálogos Rápidos</h2>
-        <div style="display: flex; gap: 2rem; margin-top: 2rem;">
+    try {
+        // Fetch protocols
+        const { data: protocolos, error } = await supabaseClient
+            .from('protocols')
+            .select('*')
+            .order('created_at', { ascending: false });
 
-            <div style="flex: 1; background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <h3>Nuevo Protocolo</h3>
-                <form id="formNuevoProtocolo">
-                    <div class="form-group">
-                        <label>Nombre del Protocolo (ID interno):</label>
-                        <input type="text" id="inputNombreProtocolo" required>
-                    </div>
-                    <button type="submit" class="btn-principal" style="width: auto;">Crear Protocolo</button>
-                </form>
-                <ul id="listaProtocolos" style="margin-top: 1rem; padding-left: 20px; color: #4b5563;"></ul>
-            </div>
+        if (error) throw error;
 
-            <div style="flex: 1; background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <h3>Nueva Categoría (Restringida por Rol)</h3>
-                <form id="formNuevaCategoria">
-                    <div class="form-group">
-                        <label>Nombre de Categoría:</label>
-                        <input type="text" id="inputNombreCategoria" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Visible Para (Rol):</label>
-                        <select id="selectRoleTarget">
-                            <option value="">Todos (Global)</option>
-                            <option value="staff">Solo Staff (CRC/Data Entry)</option>
-                            <option value="manager">Solo Managers</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn-principal" style="width: auto;">Crear Categoría</button>
-                </form>
-                <ul id="listaCategorias" style="margin-top: 1rem; padding-left: 20px; color: #4b5563;"></ul>
-            </div>
-
-        </div>
-    `;
-
-    // Render lists
-    renderizarListasCatalogos();
-
-    // Attach events
-    document.getElementById('formNuevoProtocolo').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const nombre = document.getElementById('inputNombreProtocolo').value.trim();
-        if(!nombre) return;
-        try {
-            const { error } = await supabaseClient.from('protocols').insert([{ name: nombre }]);
-
-            document.getElementById('formNuevoProtocolo').reset();
-            await cargarCatalogos(); // reload state
-            renderizarListasCatalogos();
-        } catch(err) {
-            alert('Error al crear protocolo: ' + err.message);
+        const tbody = document.getElementById('cuerpoTablaAdminProtocolos');
+        if (tbody) {
+            tbody.innerHTML = '';
+            protocolos.forEach(p => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${escapeHTML(p.code)}</strong></td>
+                        <td>${escapeHTML(p.name)}</td>
+                        <td><span class="status-badge status-approved">Activo</span></td>
+                    </tr>
+                `;
+            });
         }
-    });
-
-    document.getElementById('formNuevaCategoria').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const nombre = document.getElementById('inputNombreCategoria').value.trim();
-        const role = document.getElementById('selectRoleTarget').value || null;
-        if(!nombre) return;
-        try {
-            const { error } = await supabaseClient.from('categories').insert([{ name: nombre, role_target: role }]);
-
-            document.getElementById('formNuevaCategoria').reset();
-            await cargarCatalogos(); // reload state
-            renderizarListasCatalogos();
-        } catch(err) {
-            alert('Error al crear categoría: ' + err.message);
-        }
-    });
+    } catch (err) {
+        console.error("Error loading catalogs:", err.message);
+    }
 }
+
+// Ensure event listener for the new protocol form exists
+document.addEventListener('DOMContentLoaded', () => {
+    const formNuevoProtocolo = document.getElementById('formNuevoProtocolo');
+    if (formNuevoProtocolo) {
+        formNuevoProtocolo.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const codeInput = document.getElementById('inputNuevoCodigoP');
+            const nameInput = document.getElementById('inputNuevoNombreP');
+
+            const code = codeInput.value.trim();
+            const name = nameInput.value.trim();
+
+            if (!code || !name) return;
+
+            btn.textContent = 'Guardando...';
+            btn.disabled = true;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('protocols')
+                    .insert([{ code, name }]);
+
+                if (error) throw error;
+
+                alert('Protocolo creado exitosamente');
+                codeInput.value = '';
+                nameInput.value = '';
+                await cargarVistaCatalogos();
+            } catch (err) {
+                console.error("Error creating protocol:", err.message);
+                alert('Error: ' + err.message);
+            } finally {
+                btn.textContent = 'Añadir Protocolo';
+                btn.disabled = false;
+            }
+        });
+    }
+});
+
 
 function renderizarListasCatalogos() {
     const ulProt = document.getElementById('listaProtocolos');

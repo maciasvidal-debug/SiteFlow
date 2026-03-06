@@ -18,10 +18,16 @@
 </head>
 <body>
     <!-- App update notification -->
-    <div id="toastActualizacion" class="toast-actualizacion" aria-live="polite" hidden>
-        Nueva versión disponible
-        <button id="btnActualizarApp" class="btn-actualizar">Actualizar</button>
+
+    <!-- App update notification banner -->
+    <div id="updateBannerOverlay" class="update-banner-overlay" aria-live="polite" role="alert">
+        <div class="update-banner-content">
+            <span style="font-size: 1.2rem;">✨</span>
+            <span>Hay una nueva versión de SiteFlow.</span>
+        </div>
+        <button id="btnUpdateAppNow" class="btn-update-now">Actualizar</button>
     </div>
+
 
     <!-- Login Screen -->
     <div id="pantallaLogin" class="container" style="display: none;">
@@ -59,7 +65,7 @@
                     <button id="btnCerrarSesion" class="btn-secundario">Salir</button>
                 </div>
             </div>
-            <h1>SiteFlow <span class="badge-version">v2.1</span></h1>
+            <h1>SiteFlow </h1>
 
             <!-- Navigation specifically for polymorphic roles -->
 
@@ -172,9 +178,46 @@
 
             <!-- View: Catalogs (Managers, Admins) -->
             <section id="vistaCatalogos" class="vista" style="display: none;">
-                <h2>Gestión de Catálogos</h2>
-                <!-- Catalog Management UI will be here -->
-                <p>Módulo de catálogos en desarrollo...</p>
+                <h2>Gestión Administrativa</h2>
+
+                <div class="dashboard-grid">
+                    <!-- Protocolos Card -->
+                    <div class="dashboard-card" style="grid-column: 1 / -1;">
+                        <h3 class="dashboard-card-title">Gestión de Protocolos</h3>
+                        <form id="formNuevoProtocolo" class="form-row" style="margin-bottom: 1rem;">
+                            <div class="form-group" style="flex: 2;">
+                                <input type="text" id="inputNuevoCodigoP" placeholder="Código (ej. PROT-001)" required>
+                            </div>
+                            <div class="form-group" style="flex: 3;">
+                                <input type="text" id="inputNuevoNombreP" placeholder="Nombre descriptivo" required>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <button type="submit" class="btn-principal" style="height: 100%;">Añadir Protocolo</button>
+                            </div>
+                        </form>
+                        <div class="table-container" style="margin-top:0;">
+                            <table aria-label="Lista de protocolos">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Nombre</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cuerpoTablaAdminProtocolos">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Categorías y Actividades Card -->
+                    <div class="dashboard-card" style="grid-column: 1 / -1;">
+                        <h3 class="dashboard-card-title">Categorías y Actividades</h3>
+                        <p style="font-size:0.875rem; color:#6b7280; margin-bottom: 1rem;">El modelo de datos requiere configurar las categorías y actividades a través de scripts de inicialización o migraciones en Supabase directamente para garantizar la integridad referencial y las dependencias de la UI (Micro Operaciones, Micro Administrativas).</p>
+                        <button class="btn-secundario" disabled>Gestionar (En desarrollo)</button>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
@@ -206,7 +249,7 @@
         </button>
         <button class="nav-btn" data-target="vistaCatalogos" id="btnNavCatalogos" style="display: none;">
             <span class="nav-icon">📁</span>
-            <span class="nav-text">Catálogos</span>
+            <span class="nav-text">Gestión</span>
         </button>
     </nav>
 
