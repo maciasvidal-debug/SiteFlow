@@ -79,6 +79,49 @@ describe('SiteFlow v2 Core Utilities', () => {
             expect(app.escapeHTML(false)).toBe('false');
             expect(app.escapeHTML(true)).toBe('true');
         });
+});
+    describe('mostrarToast', () => {
+        beforeEach(() => {
+            document.body.innerHTML = '<div id="toastContainer"></div>';
+            jest.useFakeTimers();
+        });
+
+        afterEach(() => {
+            document.body.innerHTML = '';
+            jest.clearAllTimers();
+            jest.useRealTimers();
+        });
+
+        test('should create a toast element with correct message', () => {
+            app.mostrarToast('Test Message');
+            const toastContainer = document.getElementById('toastContainer');
+            expect(toastContainer.children.length).toBe(1);
+            const toast = toastContainer.children[0];
+            expect(toast.className).toBe('toast');
+            expect(toast.textContent).toBe('Test Message');
+        });
+
+        test('should add oculto class after 2500ms', () => {
+            app.mostrarToast('Test Message');
+            const toast = document.getElementById('toastContainer').children[0];
+            expect(toast.classList.contains('oculto')).toBe(false);
+
+            jest.advanceTimersByTime(2500);
+
+            expect(toast.classList.contains('oculto')).toBe(true);
+        });
+
+        test('should remove toast element after 3000ms total', () => {
+            app.mostrarToast('Test Message');
+            const toastContainer = document.getElementById('toastContainer');
+            expect(toastContainer.children.length).toBe(1);
+
+            jest.advanceTimersByTime(2500);
+            expect(toastContainer.children.length).toBe(1);
+
+            jest.advanceTimersByTime(500);
+            expect(toastContainer.children.length).toBe(0);
+        });
     });
 
     describe('cambiarVista', () => {

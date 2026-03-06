@@ -142,6 +142,15 @@ async function initializeUser(user) {
     }
 }
 
+function mostrarToast(mensaje) {
+    const contenedor = document.getElementById("toastContainer");
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.textContent = mensaje;
+    contenedor.appendChild(toast);
+    setTimeout(() => { toast.classList.add("oculto"); setTimeout(() => toast.remove(), 500); }, 2500);
+}
+
 // --- UI & Polymorphism ---
 function mostrarLogin() {
     document.getElementById('pantallaLogin').style.display = 'block';
@@ -188,7 +197,7 @@ function configurarUIporRol(rol) {
         if(btnNavCatalogos) btnNavCatalogos.style.display = 'flex';
         cambiarVista('vistaRegistro');
     } else {
-        // Staff role
+        // General clinical roles (CRA, CRC, Data Entry, Regulatory Affairs)
         if(btnRegistro) btnRegistro.style.display = 'flex';
         cambiarVista('vistaRegistro');
     }
@@ -567,7 +576,8 @@ function actualizarEstadisticas(entries) {
 
 // --- Dashboard & Audit Flow (Managers & Super Admins) ---
 async function cargarDashboardEquipo() {
-    if (State.profile.role === 'staff') return;
+    const managementRoles = ['super_admin', 'manager', 'vp', 'it_admin'];
+    if (!managementRoles.includes(State.profile.role)) return;
 
     try {
         // Fetch profiles in the same department (handled securely via RLS)
@@ -924,7 +934,8 @@ document.getElementById('btnSaveQuery').addEventListener('click', async () => {
 
 // --- Backoffice / Catalog Management ---
 async function cargarVistaCatalogos() {
-    if (State.profile.role === 'staff') return;
+    const managementRoles = ['super_admin', 'manager', 'vp', 'it_admin'];
+    if (!managementRoles.includes(State.profile.role)) return;
 
     try {
         // Fetch protocols
@@ -1156,6 +1167,6 @@ if (typeof module !== 'undefined' && module.exports) {
         actualizarEstadisticas,
         State, // export state for testing if needed
         renderizarTablaBitacora,
-        cambiarVista
+        mostrarToast
     };
 }
