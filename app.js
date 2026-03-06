@@ -232,13 +232,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Login Form
     document.getElementById('formularioLogin').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('inputEmail').value;
+        const email = document.getElementById('inputEmail').value.trim();
         const password = document.getElementById('inputPassword').value;
         const errorDiv = document.getElementById('mensajeErrorLogin');
 
         try {
             errorDiv.textContent = 'Iniciando sesión...';
             const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) throw error;
 
             errorDiv.textContent = '';
         } catch (err) {
@@ -1161,6 +1162,7 @@ if (typeof module !== 'undefined' && module.exports) {
         checkSession,
         initializeUser,
         configurarUIporRol,
+        cambiarVista,
         escaparCSV,
         escapeHTML,
         crearOpcion,
