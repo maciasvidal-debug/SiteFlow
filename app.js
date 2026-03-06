@@ -267,8 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Flujo de éxito
             errorDiv.textContent = '';
-            await cargarDatosIniciales();
-            mostrarAppPrincipal();
+            await checkSession();
         } catch (err) {
             // Vincular el estado de error de forma reactiva en la UI
             errorDiv.textContent = err.message || 'Ocurrió un error al iniciar sesión';
