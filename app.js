@@ -27,10 +27,9 @@ if ('serviceWorker' in navigator) {
         // Listen for controller change to reload
         let recargando = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (!recargando) {
-                window.location.reload();
-                recargando = true;
-            }
+            if (recargando) return;
+            recargando = true;
+            window.location.reload();
         });
     });
 }
@@ -167,39 +166,30 @@ function configurarUIporRol(rol) {
     const btnRegistro = document.querySelector('[data-target="vistaRegistro"]');
     const btnNavDashboard = document.getElementById('btnNavDashboard');
     const btnNavCatalogos = document.getElementById('btnNavCatalogos');
+    const btnNavEstadisticas = document.querySelector('[data-target="vistaEstadisticas"]');
 
-    navMenu.style.display = 'flex'; // Show navigation
+    navMenu.style.display = 'flex';
 
-    // Reset all tabs to hidden initially
     if(btnRegistro) btnRegistro.style.display = 'none';
     if(btnNavDashboard) btnNavDashboard.style.display = 'none';
     if(btnNavCatalogos) btnNavCatalogos.style.display = 'none';
+    if(btnNavEstadisticas) btnNavEstadisticas.style.display = 'flex';
 
     if (rol === 'vp') {
-        // VP only reviews team dashboard
         if(btnNavDashboard) btnNavDashboard.style.display = 'flex';
-        // Extra assurance: completely remove the DOM element to prevent layout/CSS issues or accidental clicks
         if (btnRegistro) {
             btnRegistro.style.display = 'none';
             btnRegistro.remove();
         }
-        // Auto navigate
-        setTimeout(() => cambiarVista('vistaDashboard'), 100);
-    } else if (rol === 'it_admin') {
-        // IT Admin strictly manages catalogs
-        if(btnNavCatalogos) btnNavCatalogos.style.display = 'flex';
-        // Auto navigate
-        setTimeout(() => cambiarVista('vistaCatalogos'), 100);
-    } else if (rol === 'super_admin' || rol === 'manager') {
-        // Full access
+    } else if (rol === 'manager' || rol === 'super_admin') {
         if(btnRegistro) btnRegistro.style.display = 'flex';
         if(btnNavDashboard) btnNavDashboard.style.display = 'flex';
         if(btnNavCatalogos) btnNavCatalogos.style.display = 'flex';
-        cambiarVista('vistaRegistro');
+    } else if (rol === 'it_admin') {
+        if(btnNavCatalogos) btnNavCatalogos.style.display = 'flex';
+        setTimeout(() => cambiarVista('vistaCatalogos'), 100);
     } else {
-        // General clinical roles (CRA, CRC, Data Entry, Regulatory Affairs)
         if(btnRegistro) btnRegistro.style.display = 'flex';
-        cambiarVista('vistaRegistro');
     }
 }
 
@@ -275,6 +265,232 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Stubs for core functions to be implemented in next step
 
+
+
+
+
+// --- SPRINT 2: Motor de Temas ---
+const ESTADOS_TEMA = ['sistema', 'claro', 'oscuro'];
+const ICONOS_TEMA = { 'sistema': '💻', 'claro': '☀️', 'oscuro': '🌙' };
+
+function inicializarTema() {
+    const btnTema = document.getElementById('btnTema');
+    if (!btnTema) return;
+
+    let temaActual = localStorage.getItem('siteflow_tema') || 'sistema';
+
+    const aplicarTemaUI = (tema) => {
+        btnTema.textContent = ICONOS_TEMA[tema];
+        btnTema.setAttribute('title', `Tema: ${tema.charAt(0).toUpperCase() + tema.slice(1)}`);
+        if (tema === 'oscuro') { document.documentElement.setAttribute('data-theme', 'dark'); }
+        else if (tema === 'claro') { document.documentElement.setAttribute('data-theme', 'light'); }
+        else {
+            const oscuroSistema = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', oscuroSistema ? 'dark' : 'light');
+        }
+    };
+
+    aplicarTemaUI(temaActual);
+
+    btnTema.addEventListener('click', () => {
+        temaActual = ESTADOS_TEMA[(ESTADOS_TEMA.indexOf(temaActual) + 1) % ESTADOS_TEMA.length];
+        localStorage.setItem('siteflow_tema', temaActual);
+        aplicarTemaUI(temaActual);
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        if (temaActual === 'sistema') aplicarTemaUI('sistema');
+    });
+}
+
+// --- SPRINT 3: Polimorfismo de Categorías ---
+function filtrarCategoriasPolimorficas(categoriasBase) {
+    const miRol = State.profile.role;
+    return categoriasBase.filter(cat => {
+        if (!cat.role_target) return true;
+        if (cat.role_target === miRol) return true;
+        if ((miRol === 'CRC' || miRol === 'Data Entry') && (cat.role_target === 'CRC' || cat.role_target === 'Data Entry')) return true;
+        return false;
+    });
+}
+
+// --- SPRINT 3: Dashboard Analítico (H2H) ---
+async function cargarEstadisticasAvanzadas(userIdAnalizar = 'me') {
+    try {
+        const hace30Dias = new Date();
+        hace30Dias.setDate(hace30Dias.getDate() - 30);
+        const isoDate = hace30Dias.toISOString().split('T')[0];
+
+        const { data: entries, error } = await supabase
+            .from('time_entries')
+            .select(`id, user_id, date, protocol_id, activity_id, hours, minutes, total_hours, status, protocols ( name )`)
+            .gte('date', isoDate);
+
+        if (error) throw error;
+        // Guardamos los datos puros en el State para el Universal Data Bridge (Sprint 4)
+        State.bridgeEntries = entries;
+
+        const targetUserId = userIdAnalizar === 'me' ? State.profile.id : userIdAnalizar;
+        const userEntries = entries.filter(e => e.user_id === targetUserId);
+
+        // Atómicas
+        const protocolBurn = {};
+        userEntries.forEach(e => {
+            const pName = e.protocols?.name || 'N/A';
+            protocolBurn[pName] = (protocolBurn[pName] || 0) + Number(e.total_hours);
+        });
+        const topProtocol = Object.keys(protocolBurn).sort((a,b) => protocolBurn[b] - protocolBurn[a])[0] || 'N/A';
+        document.getElementById('statTopBurner').textContent = topProtocol;
+
+        let atomicCount = 0, approvedCount = 0, totalUserHours = 0;
+        userEntries.forEach(e => {
+            if ((e.hours * 60) + e.minutes < 5) atomicCount++;
+            if (e.status === 'approved') approvedCount++;
+            totalUserHours += Number(e.total_hours);
+        });
+
+        const atomicRatio = userEntries.length > 0 ? Math.round((atomicCount / userEntries.length) * 100) : 0;
+        const qualityRatio = userEntries.length > 0 ? Math.round((approvedCount / userEntries.length) * 100) : 0;
+
+        document.getElementById('statAtomicRatio').textContent = `${atomicRatio}%`;
+        document.getElementById('statQualityScore').textContent = `${qualityRatio}%`;
+
+        // H2H
+        const esManager = ['manager', 'vp', 'super_admin'].includes(State.profile.role);
+        const h2hContainer = document.getElementById('h2hContainer');
+        const h2hSelectorContainer = document.getElementById('h2hSelectorContainer');
+
+        if (esManager) {
+            h2hContainer.style.display = 'block';
+            h2hSelectorContainer.style.display = 'block';
+
+            const numUsers = new Set(entries.map(e => e.user_id)).size || 1;
+            let totalTeamHours = 0, teamAtomicCount = 0;
+
+            entries.forEach(e => {
+                totalTeamHours += Number(e.total_hours);
+                if ((e.hours * 60) + e.minutes < 5) teamAtomicCount++;
+            });
+
+            const avgTeamHours = totalTeamHours / numUsers;
+            const teamAtomicRatio = entries.length > 0 ? Math.round((teamAtomicCount / entries.length) * 100) : 0;
+            const maxHours = Math.max(totalUserHours, avgTeamHours, 1);
+
+            document.getElementById('h2hUserHours').textContent = totalUserHours.toFixed(1);
+            document.getElementById('barUserHours').style.width = `${(totalUserHours / maxHours) * 100}%`;
+            document.getElementById('h2hTeamHours').textContent = avgTeamHours.toFixed(1);
+            document.getElementById('barTeamHours').style.width = `${(avgTeamHours / maxHours) * 100}%`;
+
+            document.getElementById('h2hUserAtomic').textContent = `${atomicRatio}%`;
+            document.getElementById('barUserAtomic').style.width = `${atomicRatio}%`;
+            document.getElementById('h2hTeamAtomic').textContent = `${teamAtomicRatio}%`;
+            document.getElementById('barTeamAtomic').style.width = `${teamAtomicRatio}%`;
+        } else {
+            h2hContainer.style.display = 'none';
+            h2hSelectorContainer.style.display = 'none';
+        }
+    } catch (err) { console.error("Error BI:", err); mostrarToast("Error calculando analíticas."); }
+}
+
+function verAnaliticasDeUsuario(userId) {
+    cambiarVista('vistaEstadisticas');
+    const select = document.getElementById('selectUsuarioH2H');
+    if (select) {
+        if(!Array.from(select.options).some(opt => opt.value === userId)){
+             select.appendChild(crearOpcion(userId, 'Selección H2H'));
+        }
+        select.value = userId;
+    }
+    cargarEstadisticasAvanzadas(userId);
+}
+
+// --- SPRINT 4: Universal Data Bridge ---
+
+function exportarDatosCSV() {
+    if (!State.bridgeEntries || State.bridgeEntries.length === 0) {
+        mostrarToast("No hay datos para exportar.");
+        return;
+    }
+
+    const lineas = [];
+    lineas.push("id,user_id,date,protocol_name,activity_id,hours,minutes,total_hours,status");
+
+    State.bridgeEntries.forEach(e => {
+        const id = e.id;
+        const uid = e.user_id;
+        const fecha = e.date;
+        const horas = e.hours;
+        const mins = e.minutes;
+        const tHoras = e.total_hours;
+
+        const prot = escaparCSV(e.protocols?.name || 'N/A');
+        const act = e.activity_id;
+        const stat = escaparCSV(e.status);
+
+        lineas.push(`${id},${uid},${fecha},${prot},${act},${horas},${mins},${tHoras},${stat}`);
+    });
+
+    const csvData = lineas.join('\n');
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SiteFlow_Export_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    mostrarToast("CSV Exportado (SPSS/STATA Ready)");
+}
+
+function exportarDatosJSON() {
+    if (!State.bridgeEntries || State.bridgeEntries.length === 0) {
+        mostrarToast("No hay datos para exportar.");
+        return;
+    }
+
+    const payload = {
+        metadata: {
+            export_date: new Date().toISOString(),
+            exported_by: State.profile.id,
+            role: State.profile.role,
+            total_records: State.bridgeEntries.length
+        },
+        data: State.bridgeEntries
+    };
+
+    const jsonString = JSON.stringify(payload, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SiteFlow_PowerBI_Source_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    mostrarToast("JSON Exportado (Power BI Ready)");
+}
+
+// --- Inicialización General de Eventos ---
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarTema();
+
+    const selectH2H = document.getElementById('selectUsuarioH2H');
+    if (selectH2H) selectH2H.addEventListener('change', (e) => cargarEstadisticasAvanzadas(e.target.value));
+
+    const btnExportCSV = document.getElementById('btnExportCSV');
+    if (btnExportCSV) btnExportCSV.addEventListener('click', exportarDatosCSV);
+
+    const btnExportJSON = document.getElementById('btnExportJSON');
+    if (btnExportJSON) btnExportJSON.addEventListener('click', exportarDatosJSON);
+
+    const btnNavEstadisticas = document.querySelector('[data-target="vistaEstadisticas"]');
+    if (btnNavEstadisticas) {
+        btnNavEstadisticas.addEventListener('click', () => {
+            if (document.getElementById('selectUsuarioH2H')) {
+                document.getElementById('selectUsuarioH2H').value = 'me';
+            }
+            cargarEstadisticasAvanzadas('me');
+        });
+    }
+});
 
 
 // Exports for testing

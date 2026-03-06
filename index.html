@@ -14,6 +14,17 @@
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+    <script>
+        (function() {
+            try {
+                const temaGuardado = localStorage.getItem('siteflow_tema') || 'sistema';
+                const oscuroSistema = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (temaGuardado === 'oscuro' || (temaGuardado === 'sistema' && oscuroSistema)) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+            } catch (e) { console.error('Error inicializando tema en el head:', e); }
+        })();
+    </script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -62,7 +73,10 @@
                 </div>
                 <div class="user-info">
                     <span id="userEmailDisplay"></span>
-                    <button id="btnCerrarSesion" class="btn-secundario">Salir</button>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button id="btnTema" class="btn-icon" aria-label="Cambiar tema de la aplicación" title="Cambiar tema">💻</button>
+                        <button id="btnCerrarSesion" class="btn-secundario">Salir</button>
+                    </div>
                 </div>
             </div>
 
@@ -201,6 +215,76 @@
                 </div>
             </section>
 
+            <!-- View: Stats (Sprints 3 y 4) -->
+            <section id="vistaEstadisticas" class="vista" style="display: none;">
+                <div class="stats-header" style="padding: 1rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
+                    <h2 style="color: var(--primary-color); margin: 0; font-size: 2rem; font-weight: 800; text-transform: uppercase;">Rendimiento Analítico</h2>
+
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <!-- Data Bridge (Universal) -->
+                        <button id="btnExportCSV" class="btn-secundario" title="Exportar para SPSS/STATA">📥 CSV</button>
+                        <button id="btnExportJSON" class="btn-secundario" title="Exportar para Power BI">📊 JSON</button>
+
+                        <!-- H2H Selector (Solo Managers) -->
+                        <div id="h2hSelectorContainer" style="display: none;">
+                            <select id="selectUsuarioH2H" class="h2h-select" aria-label="Seleccionar usuario para comparar">
+                                <option value="me">Mi Rendimiento</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Métricas Atómicas -->
+                <div class="atomic-metrics-grid" style="margin-bottom: 2rem;">
+                    <div class="metric-card">
+                        <div class="metric-title">🔥 Top Burner (Protocolo)</div>
+                        <div class="metric-value-huge" id="statTopBurner">--</div>
+                        <div class="metric-subtitle">Mayor carga horaria (30d)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">⚡ Atomic Task Ratio</div>
+                        <div class="metric-value-huge" id="statAtomicRatio">0%</div>
+                        <div class="metric-subtitle">Registros < 5 minutos</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">🎯 Quality Score</div>
+                        <div class="metric-value-huge" id="statQualityScore" style="color: var(--success-color);">0%</div>
+                        <div class="metric-subtitle">Aprobación Directa</div>
+                    </div>
+                </div>
+
+                <!-- H2H Container -->
+                <div id="h2hContainer" class="h2h-container" style="display: none;">
+                    <h3 style="text-align: center; text-transform: uppercase; letter-spacing: 2px; color: #6b7280; font-size: 0.9rem;">Head-to-Head (H2H) vs Promedio Equipo</h3>
+                    <div class="h2h-row">
+                        <div class="h2h-label">Total Horas (30d)</div>
+                        <div class="h2h-bars">
+                            <div class="h2h-bar-wrapper">
+                                <span class="h2h-val user-val" id="h2hUserHours">0</span>
+                                <div class="progress-bg"><div id="barUserHours" class="progress-bar-neon neon-blue" style="width: 0%;"></div></div>
+                            </div>
+                            <div class="h2h-bar-wrapper">
+                                <span class="h2h-val team-val" id="h2hTeamHours">0</span>
+                                <div class="progress-bg"><div id="barTeamHours" class="progress-bar-neon neon-pink" style="width: 0%;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h2h-row">
+                        <div class="h2h-label">Eficiencia Atómica (< 5m)</div>
+                        <div class="h2h-bars">
+                            <div class="h2h-bar-wrapper">
+                                <span class="h2h-val user-val" id="h2hUserAtomic">0%</span>
+                                <div class="progress-bg"><div id="barUserAtomic" class="progress-bar-neon neon-blue" style="width: 0%;"></div></div>
+                            </div>
+                            <div class="h2h-bar-wrapper">
+                                <span class="h2h-val team-val" id="h2hTeamAtomic">0%</span>
+                                <div class="progress-bg"><div id="barTeamAtomic" class="progress-bar-neon neon-pink" style="width: 0%;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- View: Catalogs (Managers, Admins) -->
             <section id="vistaCatalogos" class="vista" style="display: none;">
                 <h2>Gestión Administrativa</h2>
@@ -302,6 +386,8 @@
         </main>
     </div>
 
+    </div>
+
     <!-- Modal for Edit/Query Action -->
     <div id="modalQuery" class="modal" hidden>
         <div class="modal-content">
@@ -322,6 +408,10 @@
         <button class="nav-btn active" data-target="vistaRegistro">
             <span class="nav-icon">📝</span>
             <span class="nav-text">Registro</span>
+        </button>
+        <button class="nav-btn" data-target="vistaEstadisticas" id="btnNavEstadisticas" style="display: none;">
+            <span class="nav-icon">📈</span>
+            <span class="nav-text">Stats</span>
         </button>
         <button class="nav-btn" data-target="vistaDashboard" id="btnNavDashboard" style="display: none;">
             <span class="nav-icon">📊</span>

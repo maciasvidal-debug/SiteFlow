@@ -9,6 +9,23 @@
     --warning-color: #f59e0b;
     --border-radius: 6px;
     --shadow: 0 4px 6px rgba(0,0,0,0.1);
+    --surface-color: #ffffff;
+    --border-color: #d1d5db;
+    --input-bg: #ffffff;
+    --th-bg: #f9fafb;
+}
+
+[data-theme="dark"] {
+    --primary-color: #3b82f6;
+    --primary-hover: #60a5fa;
+    --secondary-color: #374151;
+    --text-color: #f3f4f6;
+    --bg-color: #111827;
+    --surface-color: #1f2937;
+    --border-color: #374151;
+    --input-bg: #111827;
+    --th-bg: #374151;
+    --shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
 body {
@@ -23,7 +40,7 @@ body {
 .container {
     max-width: 800px;
     margin: 0 auto;
-    background: white;
+    background-color: var(--surface-color);
     padding: 2rem;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
@@ -84,7 +101,7 @@ label {
 input, select, textarea {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     box-sizing: border-box;
     font-family: inherit;
@@ -192,9 +209,9 @@ th, td {
 }
 
 th {
-    background-color: #f9fafb;
+    background-color: var(--th-bg);
     font-weight: 600;
-    color: #4b5563;
+    color: var(--text-color);
 }
 
 .acciones-celda {
@@ -450,7 +467,7 @@ input, select, textarea, button, .nav-btn {
         white-space: nowrap;
         font-weight: 600;
         text-align: left;
-        color: #4b5563;
+        color: var(--text-color);
     }
 
     /* Labels for specific table columns */
@@ -675,3 +692,42 @@ body.has-update-banner {
     color: #111827;
     line-height: 1;
 }
+
+
+/* App Container */
+.app-container { max-width: 1200px; margin: 0 auto; width: 100%; }
+
+/* Icon Button */
+.btn-icon { background: transparent; border: 1px solid var(--border-color); color: var(--text-color); font-size: 1.25rem; padding: 0.5rem; border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; transition: background-color 0.2s; }
+.btn-icon:hover { background-color: var(--secondary-color); }
+
+/* CSS Grid Desktop Forms */
+@media (min-width: 1024px) {
+    #formularioBitacora { max-width: none; margin-left: auto; margin-right: auto; }
+    form, .form-row { display: grid !important; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; align-items: start; }
+    .form-group.full-width { grid-column: 1 / -1; }
+    .form-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 1rem; }
+    button[type="submit"], .btn-principal, .btn-secundario { width: auto !important; min-width: 150px; }
+}
+
+/* Dashboard Atómico & H2H */
+.atomic-metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+.metric-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; text-align: center; box-shadow: var(--shadow); transition: transform 0.2s ease; }
+.metric-card:hover { transform: translateY(-4px); }
+.metric-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+.metric-value-huge { font-size: 3.5rem; font-weight: 900; color: var(--text-color); line-height: 1.1; margin-bottom: 0.25rem; font-family: impact, sans-serif; word-break: break-word; }
+.metric-subtitle { font-size: 0.8rem; color: #9ca3af; }
+
+.h2h-container { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: var(--shadow); }
+.h2h-select { font-weight: bold; background-color: transparent; border: 2px solid var(--primary-color); color: var(--primary-color); border-radius: 20px; padding: 0.5rem 1rem; }
+.h2h-row { margin-top: 1.5rem; }
+.h2h-label { font-weight: 800; margin-bottom: 0.5rem; }
+.h2h-bars { display: flex; flex-direction: column; gap: 0.75rem; }
+.h2h-bar-wrapper { display: flex; align-items: center; gap: 1rem; }
+.h2h-val { width: 60px; text-align: right; font-weight: bold; font-family: monospace; font-size: 1.1rem; }
+.user-val { color: #3b82f6; }
+.team-val { color: #ec4899; }
+.progress-bg { flex-grow: 1; height: 12px; background-color: var(--secondary-color); border-radius: 6px; overflow: hidden; }
+.progress-bar-neon { height: 100%; border-radius: 6px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+.neon-blue { background: linear-gradient(90deg, #2563eb, #60a5fa); box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+.neon-pink { background: linear-gradient(90deg, #db2777, #f472b6); box-shadow: 0 0 10px rgba(236, 72, 153, 0.5); }

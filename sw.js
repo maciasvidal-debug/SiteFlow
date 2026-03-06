@@ -1,5 +1,5 @@
 // Le damos un nombre a nuestra "memoria caché" (usamos versionado semántico)
-const NOMBRE_CACHE = 'siteflow-v2.1.2';
+const NOMBRE_CACHE = 'siteflow-v2.2.0';
 
 // Lista de archivos que queremos guardar en el teléfono
 const archivosACachear = [
@@ -56,13 +56,7 @@ self.addEventListener('fetch', evento => {
 
 // Escuchar mensaje para forzar la actualización (skipWaiting)
 self.addEventListener('message', evento => {
-    if (evento.data === 'SKIP_WAITING') {
-        self.skipWaiting();
-    }
-});
-
-self.addEventListener('message', event => {
-    if (event.data && event.data.action === 'skipWaiting') {
+    if (evento.data === 'SKIP_WAITING' || (evento.data && evento.data.action === 'skipWaiting')) {
         self.skipWaiting();
     }
 });
