@@ -123,4 +123,65 @@ describe('SiteFlow v2 Core Utilities', () => {
             expect(toastContainer.children.length).toBe(0);
         });
     });
+
+    describe('cambiarVista', () => {
+        beforeEach(() => {
+            // Document setup for test
+            document.body.innerHTML = `
+                <div id="vistaRegistro" class="vista active" style="display: block;"></div>
+                <div id="vistaDashboard" class="vista" style="display: none;"></div>
+                <div id="vistaCatalogos" class="vista" style="display: none;"></div>
+                <button class="nav-btn active" data-target="vistaRegistro"></button>
+                <button class="nav-btn" data-target="vistaDashboard"></button>
+                <button class="nav-btn" data-target="vistaCatalogos"></button>
+            `;
+            // Mocking global method called inside cambiarVista
+            global.cargarDashboardEquipo = jest.fn();
+
+            // Set required state
+            app.State.profile = { role: 'super_admin' };
+
+            // Override the actual function inside the app instance with the mock
+            app.cargarDashboardEquipo = jest.fn();
+        });
+
+        test('debería ocultar la vista actual y mostrar la vista destino', () => {
+            const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+            app.cambiarVista('vistaDashboard');
+
+            expect(document.getElementById('vistaRegistro').style.display).toBe('none');
+            expect(document.getElementById('vistaRegistro').classList.contains('active')).toBe(false);
+
+            expect(document.getElementById('vistaDashboard').style.display).toBe('block');
+            expect(document.getElementById('vistaDashboard').classList.contains('active')).toBe(true);
+
+            expect(app.State.currentView).toBe('vistaDashboard');
+            consoleSpy.mockRestore();
+        });
+
+        test('debería actualizar la clase active en los botones de navegación', () => {
+            app.cambiarVista('vistaCatalogos');
+
+            const btnRegistro = document.querySelector('[data-target="vistaRegistro"]');
+            const btnCatalogos = document.querySelector('[data-target="vistaCatalogos"]');
+
+            expect(btnRegistro.classList.contains('active')).toBe(false);
+            expect(btnCatalogos.classList.contains('active')).toBe(true);
+        });
+
+        test('debería manejar correctamente cargarDashboardEquipo si la vista destino es vistaDashboard', () => {
+            // Because cargarDashboardEquipo is not injected but globally available inside app.js scope,
+            // we will verify that it doesn't throw when state is set properly
+
+            const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+            expect(() => {
+                app.cambiarVista('vistaDashboard');
+            }).not.toThrow();
+
+            expect(document.getElementById('vistaDashboard').classList.contains('active')).toBe(true);
+
+            consoleSpy.mockRestore();
+        });
+    });
 });

@@ -142,13 +142,12 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn-principal" id="btnGuardar">Guardar Actividad</button>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button type="submit" class="btn-principal" id="btnGuardar" style="flex: 3;">Guardar Actividad</button>
+                        <button type="button" id="btnLimpiarLocal" class="btn-secundario" style="flex: 1; background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db;" title="Limpiar Formulario">Limpiar</button>
+                    </div>
                     <input type="hidden" id="inputIdEdicion" value="">
                 </form>
-
-                <div class="acciones-tabla">
-                    <button id="btnLimpiarLocal" class="btn-secundario btn-peligro">Limpiar Filtros</button>
-                </div>
 
                 <div class="table-container">
                     <table id="tablaBitacora" aria-label="Tabla de actividades registradas">
@@ -172,13 +171,19 @@
 
             <!-- View: Team Dashboard (Managers, Admins) -->
             <section id="vistaDashboard" class="vista" style="display: none;">
-                <h2>Dashboard de Equipo</h2>
-                <div id="dashboardStats" class="dashboard-grid">
-                    <!-- Stats will be loaded here -->
+                <div class="modern-dashboard" style="margin-bottom: 2rem;">
+                    <h2 class="dashboard-title">Operación del Equipo</h2>
+                    <div id="dashboardStats" class="stats-grid">
+                        <!-- Stats will be loaded here -->
+                    </div>
                 </div>
 
-                <h3>Auditoría de Registros</h3>
-                <div class="table-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="margin: 0; color: #111827;">Auditoría de Registros</h3>
+                    <span style="font-size: 0.875rem; color: #6b7280; background: #f3f4f6; padding: 0.25rem 0.75rem; border-radius: 1rem;">Últimos 100</span>
+                </div>
+
+                <div class="table-container" style="background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid #e5e7eb; margin-top: 0;">
                     <table id="tablaAuditoria" aria-label="Tabla de auditoría de equipo">
                         <thead>
                             <tr>
@@ -232,10 +237,65 @@
                     </div>
 
                     <!-- Categorías y Actividades Card -->
-                    <div class="dashboard-card" style="grid-column: 1 / -1;">
-                        <h3 class="dashboard-card-title">Categorías y Actividades</h3>
-                        <p style="font-size:0.875rem; color:#6b7280; margin-bottom: 1rem;">El modelo de datos requiere configurar las categorías y actividades a través de scripts de inicialización o migraciones en Supabase directamente para garantizar la integridad referencial y las dependencias de la UI (Micro Operaciones, Micro Administrativas).</p>
-                        <button class="btn-secundario" disabled>Gestionar (En desarrollo)</button>
+                    <div class="dashboard-card" style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+
+                        <!-- Categorías -->
+                        <div>
+                            <h3 class="dashboard-card-title">Gestión de Categorías</h3>
+                            <form id="formNuevaCategoria" class="form-row" style="margin-bottom: 1rem;">
+                                <div class="form-group" style="flex: 2;">
+                                    <input type="text" id="inputNuevaCatNombre" placeholder="Nombre de Categoría" required>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <button type="submit" class="btn-principal" style="height: 100%;">Añadir</button>
+                                </div>
+                            </form>
+                            <div class="table-container" style="margin-top:0;">
+                                <table aria-label="Lista de categorías">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cuerpoTablaAdminCategorias">
+                                        <!-- Dynamic -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Actividades -->
+                        <div>
+                            <h3 class="dashboard-card-title">Gestión de Actividades</h3>
+                            <form id="formNuevaActividad" class="form-row" style="margin-bottom: 1rem;">
+                                <div class="form-group" style="flex: 2;">
+                                    <select id="selectCatParaActividad" required>
+                                        <option value="" disabled selected>Seleccione Categoría</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex: 2;">
+                                    <input type="text" id="inputNuevaActNombre" placeholder="Nombre de Actividad" required>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <button type="submit" class="btn-principal" style="height: 100%;">Añadir</button>
+                                </div>
+                            </form>
+                            <div class="table-container" style="margin-top:0;">
+                                <table aria-label="Lista de actividades">
+                                    <thead>
+                                        <tr>
+                                            <th>Categoría</th>
+                                            <th>Actividad</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cuerpoTablaAdminActividades">
+                                        <!-- Dynamic -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

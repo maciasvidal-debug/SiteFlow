@@ -178,6 +178,11 @@ function configurarUIporRol(rol) {
     if (rol === 'vp') {
         // VP only reviews team dashboard
         if(btnNavDashboard) btnNavDashboard.style.display = 'flex';
+        // Extra assurance: completely remove the DOM element to prevent layout/CSS issues or accidental clicks
+        if (btnRegistro) {
+            btnRegistro.style.display = 'none';
+            btnRegistro.remove();
+        }
         // Auto navigate
         setTimeout(() => cambiarVista('vistaDashboard'), 100);
     } else if (rol === 'it_admin') {
@@ -357,12 +362,23 @@ function renderizarSelects() {
     });
 }
 
-// Initializing event listener for save
+// Initializing event listeners for forms
 document.addEventListener('DOMContentLoaded', () => {
-     document.getElementById('formularioBitacora').addEventListener('submit', async (e) => {
+    document.getElementById('formularioBitacora').addEventListener('submit', async (e) => {
         e.preventDefault();
         await guardarRegistro();
     });
+
+    const btnLimpiar = document.getElementById('btnLimpiarLocal');
+    if (btnLimpiar) {
+        btnLimpiar.addEventListener('click', () => {
+            document.getElementById('formularioBitacora').reset();
+            document.getElementById('inputIdEdicion').value = '';
+            document.getElementById('btnGuardar').textContent = 'Guardar Actividad';
+            document.getElementById('selectActividad').disabled = true;
+            document.getElementById('selectActividad').innerHTML = '<option value="" disabled selected>Seleccione actividad</option>';
+        });
+    }
 });
 
 async function guardarRegistro() {
@@ -587,46 +603,95 @@ async function cargarDashboardEquipo() {
 
         if (entriesError) throw entriesError;
 
+        // Render Dashboard Stats Cards
+        const dashboardStats = document.getElementById('dashboardStats');
+        const cuerpoAuditoria = document.getElementById('cuerpoTablaAuditoria');
+
+        if (!teamMembers || teamMembers.length === 0) {
+            dashboardStats.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">👥</div>
+                    <h3 style="color: #111827; margin-bottom: 0.5rem;">Aún no tienes un equipo asignado</h3>
+                    <p style="color: #6b7280; max-width: 400px; margin: 0 auto;">
+                        Contacta a tu Administrador IT para que te asigne al mismo departamento que tu equipo en la base de datos (Supabase).
+                    </p>
+                </div>
+            `;
+            cuerpoAuditoria.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #6b7280; padding: 2rem;">No hay actividades para auditar</td></tr>`;
+            return;
+        }
+
         // Calculate KPIs
         const totalHoras = entries.reduce((sum, e) => sum + e.total_hours, 0);
         const pendingCount = entries.filter(e => e.status === 'pending').length;
         const queriedCount = entries.filter(e => e.status === 'queried').length;
-
-        // Render Dashboard Stats Cards
-        const dashboardStats = document.getElementById('dashboardStats');
         let htmlStats = `
-            <div class="dashboard-card">
-                <div class="dashboard-card-title">Equipo</div>
-                <div class="dashboard-card-value">${teamMembers.length}</div>
-                <div class="dashboard-card-subtext">Miembros activos</div>
+            <div class="stat-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                <div class="stat-icon bg-blue">👥</div>
+                <div class="stat-details">
+                    <span class="stat-label">Equipo Activo</span>
+                    <span class="stat-value">${teamMembers.length} <span style="font-size: 0.9rem; font-weight: normal; color: #6b7280;">miembros</span></span>
+                </div>
             </div>
-            <div class="dashboard-card">
-                <div class="dashboard-card-title">Horas Totales</div>
-                <div class="dashboard-card-value">${totalHoras.toFixed(2)} h</div>
-                <div class="dashboard-card-subtext">Registradas por el equipo</div>
+            <div class="stat-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                <div class="stat-icon bg-green">⏱️</div>
+                <div class="stat-details">
+                    <span class="stat-label">Horas Registradas</span>
+                    <span class="stat-value">${totalHoras.toFixed(2)} <span style="font-size: 0.9rem; font-weight: normal; color: #6b7280;">h</span></span>
+                </div>
             </div>
-            <div class="dashboard-card">
-                <div class="dashboard-card-title">Atención Requerida</div>
-                <div class="dashboard-card-value" style="color: ${queriedCount > 0 || pendingCount > 0 ? 'var(--warning-color)' : 'var(--success-color)'};">${pendingCount + queriedCount}</div>
-                <div class="dashboard-card-subtext">${pendingCount} Pendientes / ${queriedCount} Observadas</div>
+            <div class="stat-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                <div class="stat-icon" style="background: ${queriedCount > 0 || pendingCount > 0 ? '#fef3c7' : '#d1fae5'}; color: ${queriedCount > 0 || pendingCount > 0 ? '#d97706' : '#059669'};">⚠️</div>
+                <div class="stat-details">
+                    <span class="stat-label">Atención Requerida</span>
+                    <span class="stat-value">${pendingCount + queriedCount}</span>
+                    <span style="font-size: 0.75rem; color: #6b7280; margin-top: 2px;">${pendingCount} pendientes, ${queriedCount} queries</span>
+                </div>
             </div>
         `;
 
-        // Render detailed team list
-        let teamHtml = `<div class="dashboard-card" style="grid-column: 1 / -1;"><div class="dashboard-card-title">Miembros del Departamento</div><div style="display:flex; flex-direction:column;">`;
+        // Render detailed team list with progress visualizations
+        let teamHtml = `<div class="dashboard-card" style="grid-column: 1 / -1; border: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 12px; padding: 0; overflow: hidden;">
+            <div style="background: #f9fafb; padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
+                <h3 style="margin: 0; font-size: 1rem; color: #111827;">Miembros del Departamento</h3>
+            </div>
+            <div style="display:flex; flex-direction:column;">`;
+
+        // Find max hours for relative progress bars
+        let maxHours = 0;
         teamMembers.forEach(m => {
-            const memberName = (m.first_name + ' ' + m.last_name) || 'Desconocido';
+            const mHours = entries.filter(e => e.user_id === m.id).reduce((sum, e) => sum + e.total_hours, 0);
+            if(mHours > maxHours) maxHours = mHours;
+        });
+
+        teamMembers.forEach(m => {
+            // Prefer name over email for better UX if available
+            const nameDisplay = (m.first_name && m.last_name) ? `${m.first_name} ${m.last_name}` : (m.email || 'Desconocido');
             const memberEntries = entries.filter(e => e.user_id === m.id);
             const memberHours = memberEntries.reduce((sum, e) => sum + e.total_hours, 0);
+            const isMe = m.id === State.profile.id;
+
+            // Calculate progress bar width relative to the most active member
+            const pct = maxHours > 0 ? (memberHours / maxHours) * 100 : 0;
+
+            // Format Role
+            const roleMap = { 'staff': 'Staff', 'manager': 'Gerente', 'vp': 'VP', 'it_admin': 'IT Admin', 'super_admin': 'Super Admin' };
+            const roleDisplay = roleMap[m.role] || escapeHTML(m.role);
+
             teamHtml += `
-                <div class="miembro-card">
-                    <div class="miembro-info">
-                        <span class="miembro-email">${escapeHTML(memberName)}</span>
-                        <span class="miembro-role">${escapeHTML(m.role.replace('_', ' '))}</span>
+                <div class="miembro-card" style="display: block; padding: 1.25rem 1.5rem; border-bottom: 1px solid #f3f4f6; transition: background 0.2s; ${isMe ? 'background: #f8fafc;' : ''}">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <div class="miembro-info">
+                            <span class="miembro-email" style="font-size: 1.05rem; color: #111827;">${escapeHTML(nameDisplay)} ${isMe ? '<span class="badge-version" style="background:#e0f2fe; color:#0284c7; margin-left:8px;">Tú</span>' : ''}</span>
+                            <span class="miembro-role" style="color: #6b7280; font-weight: 500;">${roleDisplay}</span>
+                        </div>
+                        <div class="miembro-stats" style="text-align: right;">
+                            <span style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color);">${memberHours.toFixed(2)} <span style="font-size:0.8rem; font-weight:normal; color:#6b7280;">h</span></span><br>
+                            <span style="font-size:0.8rem; color:#6b7280;">${memberEntries.length} reg</span>
+                        </div>
                     </div>
-                    <div class="miembro-stats">
-                        <span style="font-weight:bold;">${memberHours.toFixed(2)}h</span><br>
-                        <span style="font-size:0.8rem; color:#6b7280;">${memberEntries.length} registros</span>
+                    <div class="progress-container" aria-hidden="true" style="height: 6px; background: #f3f4f6;">
+                        <div class="progress-bar bg-blue" style="width: ${pct}%; background-color: ${isMe ? '#38bdf8' : '#3b82f6'};"></div>
                     </div>
                 </div>
             `;
@@ -636,8 +701,8 @@ async function cargarDashboardEquipo() {
 
         // Handle Audit table if needed for manager/super_admin
         // VP shouldn't be approving/rejecting according to rules, just reviewing
-        const cuerpoAuditoria = document.getElementById('cuerpoTablaAuditoria');
-        cuerpoAuditoria.innerHTML = '';
+        // const cuerpoAuditoria = document.getElementById('cuerpoTablaAuditoria'); // Already declared
+        if (cuerpoAuditoria) cuerpoAuditoria.innerHTML = '';
 
         entries.forEach(e => {
             if (e.user_id === State.profile.id) return; // don't show own entries in audit
@@ -877,15 +942,27 @@ async function cargarVistaCatalogos() {
         const { data: protocolos, error } = await supabaseClient
             .from('protocols')
             .select('*')
-            .order('created_at', { ascending: false });
-
+            .order('name', { ascending: true });
         if (error) throw error;
+        State.protocols = protocolos;
 
-        const tbody = document.getElementById('cuerpoTablaAdminProtocolos');
-        if (tbody) {
-            tbody.innerHTML = '';
+        // Fetch Categories
+        const { data: categorias, error: errC } = await supabaseClient.from('categories').select('*').order('name', { ascending: true });
+        if (errC) throw errC;
+        State.categories = categorias;
+
+        // Fetch Activities
+        const { data: actividades, error: errA } = await supabaseClient.from('activities').select('id, category_id, name, categories(name)').order('name', { ascending: true });
+        if (errA) throw errA;
+        State.activities = actividades;
+
+
+        // Render Protocolos
+        const tbodyP = document.getElementById('cuerpoTablaAdminProtocolos');
+        if (tbodyP) {
+            tbodyP.innerHTML = '';
             protocolos.forEach(p => {
-                tbody.innerHTML += `
+                tbodyP.innerHTML += `
                     <tr>
                         <td><strong>${escapeHTML(p.code)}</strong></td>
                         <td>${escapeHTML(p.name)}</td>
@@ -894,8 +971,61 @@ async function cargarVistaCatalogos() {
                 `;
             });
         }
+
+        // Render Categorias
+        const tbodyC = document.getElementById('cuerpoTablaAdminCategorias');
+        const selectCatForm = document.getElementById('selectCatParaActividad');
+        if (tbodyC) {
+            tbodyC.innerHTML = '';
+            selectCatForm.innerHTML = '<option value="" disabled selected>Seleccione Categoría</option>';
+            categorias.forEach(c => {
+                tbodyC.innerHTML += `
+                    <tr>
+                        <td>${escapeHTML(c.name)}</td>
+                        <td>
+                            <button class="btn-peligro btn-accion" onclick="eliminarCatalogo('categories', '${c.id}')">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+                selectCatForm.appendChild(crearOpcion(c.id, c.name));
+            });
+        }
+
+        // Render Actividades
+        const tbodyA = document.getElementById('cuerpoTablaAdminActividades');
+        if (tbodyA) {
+            tbodyA.innerHTML = '';
+            actividades.forEach(a => {
+                const catName = a.categories ? a.categories.name : 'N/A';
+                tbodyA.innerHTML += `
+                    <tr>
+                        <td><span style="font-size:0.8rem; color:#6b7280;">${escapeHTML(catName)}</span></td>
+                        <td><strong>${escapeHTML(a.name)}</strong></td>
+                        <td>
+                            <button class="btn-peligro btn-accion" onclick="eliminarCatalogo('activities', '${a.id}')">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
     } catch (err) {
         console.error("Error loading catalogs:", err.message);
+    }
+}
+
+// Function to delete a catalog item
+window.eliminarCatalogo = async function(table, id) {
+    if(!confirm(`¿Seguro que deseas eliminar este registro? Esto podría fallar si está siendo utilizado por registros de tiempo.`)) return;
+
+    try {
+        const { error } = await supabaseClient.from(table).delete().eq('id', id);
+        if (error) throw error;
+        alert('Registro eliminado exitosamente');
+        await cargarVistaCatalogos();
+        await cargarCatalogos(); // Refresh global app state
+    } catch(err) {
+        alert('No se pudo eliminar: ' + err.message + '. Asegúrate de que no tenga datos asociados (Ej. registros de tiempo previos).');
     }
 }
 
@@ -933,6 +1063,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Error: ' + err.message);
             } finally {
                 btn.textContent = 'Añadir Protocolo';
+                btn.disabled = false;
+            }
+        });
+    }
+
+    const formNuevaCategoria = document.getElementById('formNuevaCategoria');
+    if (formNuevaCategoria) {
+        formNuevaCategoria.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const nameInput = document.getElementById('inputNuevaCatNombre');
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            btn.textContent = 'Guardando...';
+            btn.disabled = true;
+            try {
+                const { error } = await supabaseClient.from('categories').insert([{ name }]);
+                if (error) throw error;
+                nameInput.value = '';
+                await cargarVistaCatalogos();
+                await cargarCatalogos();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.textContent = 'Añadir';
+                btn.disabled = false;
+            }
+        });
+    }
+
+    const formNuevaActividad = document.getElementById('formNuevaActividad');
+    if (formNuevaActividad) {
+        formNuevaActividad.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const catSelect = document.getElementById('selectCatParaActividad');
+            const nameInput = document.getElementById('inputNuevaActNombre');
+            const category_id = catSelect.value;
+            const name = nameInput.value.trim();
+            if (!name || !category_id) return;
+
+            btn.textContent = 'Guardando...';
+            btn.disabled = true;
+            try {
+                const { error } = await supabaseClient.from('activities').insert([{ category_id, name }]);
+                if (error) throw error;
+                nameInput.value = '';
+                await cargarVistaCatalogos();
+                await cargarCatalogos();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.textContent = 'Añadir';
                 btn.disabled = false;
             }
         });
