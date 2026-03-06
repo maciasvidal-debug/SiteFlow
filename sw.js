@@ -16,7 +16,7 @@ self.addEventListener('install', evento => {
     evento.waitUntil(
         caches.open(NOMBRE_CACHE)
             .then(cache => {
-                console.log('Archivos cacheados con éxito');
+                // console.log('Archivos cacheados con éxito');
                 return cache.addAll(archivosACachear);
             })
     );
@@ -30,7 +30,7 @@ self.addEventListener('activate', evento => {
                 clavesCache.map(clave => {
                     // Si la caché no es la actual, la borramos
                     if (clave !== NOMBRE_CACHE) {
-                        console.log('Borrando caché antigua:', clave);
+                        // console.log('Borrando caché antigua:', clave);
                         return caches.delete(clave);
                     }
                 })

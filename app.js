@@ -5,7 +5,7 @@ let nuevoWorker;
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js').then(reg => {
-            console.log('Service Worker registrado:', reg.scope);
+            // console.log('Service Worker registrado:', reg.scope);
 
             reg.addEventListener('updatefound', () => {
                 nuevoWorker = reg.installing;
@@ -511,12 +511,35 @@ function editarRegistro(id) {
 }
 
 function actualizarEstadisticas(entries) {
-    const hoy = new Date().toISOString().split('T')[0];
-    const horasHoy = entries
-        .filter(e => e.date === hoy)
-        .reduce((sum, e) => sum + parseFloat(e.total_hours), 0);
+    const hoy = new Date();
+    const hoyStr = hoy.toISOString().split('T')[0];
+
+    // Calcular inicio de semana (lunes)
+    const inicioSemana = new Date(hoy);
+    const day = inicioSemana.getDay();
+    const diff = inicioSemana.getDate() - day + (day === 0 ? -6 : 1); // Ajustar si es domingo
+    inicioSemana.setDate(diff);
+    const inicioSemanaStr = inicioSemana.toISOString().split('T')[0];
+
+    // Métricas
+    let horasHoy = 0;
+    let horasSemana = 0;
+    let tareasHoy = 0;
+
+    entries.forEach(e => {
+        const h = parseFloat(e.total_hours) || 0;
+        if (e.date >= inicioSemanaStr && e.date <= hoyStr) {
+            horasSemana += h;
+        }
+        if (e.date === hoyStr) {
+            horasHoy += h;
+            tareasHoy++;
+        }
+    });
 
     document.getElementById('totalHorasDia').textContent = horasHoy.toFixed(2) + ' h';
+    document.getElementById('totalHorasSemana').textContent = horasSemana.toFixed(2) + ' h';
+    document.getElementById('totalTareasDia').textContent = tareasHoy.toString();
 }
 
 // --- Dashboard & Audit Flow (Managers & Super Admins) ---
