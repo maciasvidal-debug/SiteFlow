@@ -550,7 +550,7 @@ async function cargarDashboardEquipo() {
         // Fetch profiles in the same department (handled securely via RLS)
         const { data: teamMembers, error: teamError } = await supabaseClient
             .from('profiles')
-            .select('id, email, first_name, last_name, role, department')
+            .select('id, first_name, last_name, role, department')
             .order('role', { ascending: true });
 
         if (teamError) throw teamError;
@@ -560,7 +560,7 @@ async function cargarDashboardEquipo() {
             .from('time_entries')
             .select(`
                 id, date, total_hours, status, notes, user_id,
-                profiles ( email, first_name, last_name, role ),
+                profiles (  first_name, last_name, role ),
                 activities ( name ),
                 categories ( name ),
                 protocols ( name, code )
@@ -598,13 +598,13 @@ async function cargarDashboardEquipo() {
         // Render detailed team list
         let teamHtml = `<div class="dashboard-card" style="grid-column: 1 / -1;"><div class="dashboard-card-title">Miembros del Departamento</div><div style="display:flex; flex-direction:column;">`;
         teamMembers.forEach(m => {
-            const memberEmail = m.email || (m.first_name + ' ' + m.last_name);
-            const memberEntries = entries.filter(e => e.profiles && (e.profiles.email === m.email || e.profiles.first_name === m.first_name));
+            const memberName = (m.first_name + ' ' + m.last_name) || 'Desconocido';
+            const memberEntries = entries.filter(e => e.user_id === m.id);
             const memberHours = memberEntries.reduce((sum, e) => sum + e.total_hours, 0);
             teamHtml += `
                 <div class="miembro-card">
                     <div class="miembro-info">
-                        <span class="miembro-email">${escapeHTML(memberEmail)}</span>
+                        <span class="miembro-email">${escapeHTML(memberName)}</span>
                         <span class="miembro-role">${escapeHTML(m.role.replace('_', ' '))}</span>
                     </div>
                     <div class="miembro-stats">
@@ -625,7 +625,7 @@ async function cargarDashboardEquipo() {
         entries.forEach(e => {
             if (e.user_id === State.profile.id) return; // don't show own entries in audit
 
-            const emailDisplay = escapeHTML(e.profiles?.email || 'Desconocido');
+            const nombreDisplay = escapeHTML((e.profiles?.first_name && e.profiles?.last_name) ? (e.profiles.first_name + ' ' + e.profiles.last_name) : 'Desconocido');
             const actividadDisplay = escapeHTML(e.activities?.name || 'Desconocido');
 
             let btnActions = '';
@@ -638,7 +638,7 @@ async function cargarDashboardEquipo() {
 
             cuerpoAuditoria.innerHTML += `
                 <tr>
-                    <td>${emailDisplay}</td>
+                    <td>${nombreDisplay}</td>
                     <td>${escapeHTML(e.date)}</td>
                     <td>${actividadDisplay}</td>
                     <td>${escapeHTML(e.total_hours)}</td>
