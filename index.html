@@ -39,7 +39,7 @@
                 <path d="M35 50 L45 60 L65 40" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
                 <text x="100" y="65" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="48" font-weight="800" fill="currentColor" letter-spacing="-0.05em">SiteFlow</text>
             </g>
-        </svg>
+        </svg> -->
         <div class="splash-loader"></div>
     </div>
 </div>
@@ -67,7 +67,7 @@
         <path d="M35 50 L45 60 L65 40" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
         <text x="100" y="65" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="48" font-weight="800" fill="currentColor" letter-spacing="-0.05em">SiteFlow</text>
     </g>
-</svg>
+</svg> -->
 
             </div>
             <h1>Iniciar Sesión</h1>
@@ -92,17 +92,17 @@
     <div id="pantallaPrincipal" class="container" style="display: none;">
         <header>
             <div class="header-top">
-                <div class="logo-container">
+                <!-- <div class="logo-container"> -->
 
-<svg class="logo-svg" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width: 150px; height: auto;" id="logoApp">
+<!-- <svg class="logo-svg" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width: 150px; height: auto;" id="logoApp">
     <g class="logo-group">
         <circle cx="50" cy="50" r="35" stroke="currentColor" stroke-width="8" />
         <path d="M35 50 L45 60 L65 40" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
         <text x="100" y="65" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="48" font-weight="800" fill="currentColor" letter-spacing="-0.05em">SiteFlow</text>
     </g>
-</svg>
+</svg> -->
 
-                </div>
+                <!-- </div> -->
                 <div class="user-info">
                     <span id="userNameDisplay"></span>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -142,21 +142,29 @@
                 <form id="formularioBitacora" aria-label="Formulario de registro de actividades">
 
 
-                <!-- Smart Timer Horizontal -->
+                                <!-- Smart Timer Horizontal -->
                 <div class="smart-timer-container">
-                    <button type="button" id="btnSmartTimer" class="btn-smart-timer" aria-label="Iniciar cronómetro inteligente">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        <span id="textSmartTimer">Iniciar</span>
-                    </button>
-                    <div class="tiempo-input-group modern-time-input">
-                        <div class="time-input-wrapper">
-                            <input type="number" id="inputHoras" min="0" max="24" value="0" required aria-label="Horas" placeholder="00">
-                            <span class="time-unit">h</span>
+                    <div class="timer-display-section">
+                        <label class="timer-label">Smart Timer</label>
+                        <div class="digital-timer-wrapper">
+                            <span id="digitalTimerDisplay" class="digital-timer-text">00:00</span>
+                            <button type="button" id="btnSmartTimer" class="btn-smart-timer-icon" aria-label="Iniciar/Detener cronómetro inteligente">
+                                <svg id="iconSmartTimerPlay" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                <svg id="iconSmartTimerStop" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                            </button>
                         </div>
-                        <span class="time-separator">:</span>
-                        <div class="time-input-wrapper">
-                            <input type="number" id="inputMinutos" min="0" max="59" value="0" required aria-label="Minutos" placeholder="00">
-                            <span class="time-unit">m</span>
+                    </div>
+
+                    <div class="tiempo-input-group modern-time-input">
+                        <label class="timer-label text-right">Tiempo invertido</label>
+                        <div class="time-inputs-wrapper">
+                            <div class="time-input-wrapper">
+                                <input type="number" id="inputHoras" min="0" max="24" value="0" required aria-label="Horas" placeholder="00">
+                            </div>
+                            <span class="time-separator">:</span>
+                            <div class="time-input-wrapper">
+                                <input type="number" id="inputMinutos" min="0" max="59" value="0" required aria-label="Minutos" placeholder="00">
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -13,3 +13,9 @@
 ## 2026-03-06 - Progressive Disclosure & Dashboard Layout UX
 **Learning:** Cluttered UI forms (like Management or Stats) create significant cognitive load and feel like a "programmer's prototype". Using Progressive Disclosure via interactive CSS-based Cards and Accordions dramatically improves the Elite Clinical Software experience without changing backend logic.
 **Action:** Replaced static grids with hide/show Card Menus and `<div class="accordion-item">` wrappers to handle complex team/stats comparisons (H2H) and administration tools.
+
+## 2024-03-07 - Fix Smart Timer and Dark Mode Contrast
+**UX Learning:** The static text inputs (H, M) were outdated. Modernizing to floating bubble inputs without static labels, replacing text with icons, and using digital display timers creates a cleaner, less noisy UI interface.
+**Action:** Replaced static timer text with an interactive icon-based toggle button and a digital MM:SS string. Converted time inputs to bare floating bubbles without manual 'H'/'M' text.
+**Accessibility Learning:** Dark mode inputs require significantly higher contrast colors on secondary buttons and generic text.
+**Action:** Overrode `.btn-secundario` variables to `#334155` background and `#ffffff` text in `[data-theme="dark"]` ensuring compliance with visual guidelines and resolving poor visibility complaints.
