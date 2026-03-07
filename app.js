@@ -1479,7 +1479,9 @@ let smartTimerSeconds = 0;
 
 function toggleSmartTimer() {
     const btn = document.getElementById('btnSmartTimer');
-    const text = document.getElementById('textSmartTimer');
+    const display = document.getElementById('digitalTimerDisplay');
+    const iconPlay = document.getElementById('iconSmartTimerPlay');
+    const iconStop = document.getElementById('iconSmartTimerStop');
 
     if (smartTimerInterval) {
         clearInterval(smartTimerInterval);
@@ -1492,23 +1494,35 @@ function toggleSmartTimer() {
         document.getElementById('inputHoras').value = hours;
         document.getElementById('inputMinutos').value = minutes;
 
-        text.textContent = 'Iniciar';
         btn.classList.remove('running');
-        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> <span id="textSmartTimer">Iniciar</span>';
+        iconPlay.style.display = 'block';
+        iconStop.style.display = 'none';
+
+        display.textContent = '00:00';
         smartTimerSeconds = 0;
     } else {
         smartTimerSeconds = 0;
+        display.textContent = '00:00';
+
+        btn.classList.add('running');
+        iconPlay.style.display = 'none';
+        iconStop.style.display = 'block';
+
         smartTimerInterval = setInterval(() => {
             smartTimerSeconds++;
-            const m = Math.floor(smartTimerSeconds / 60).toString().padStart(2, '0');
-            const s = (smartTimerSeconds % 60).toString().padStart(2, '0');
-            btn.innerHTML = `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"6\" y=\"4\" width=\"4\" height=\"16\"/><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\"/></svg> <span id=\"textSmartTimer\">` + m + `:` + s + `</span>`;
-        }, 1000);
 
-        btn.classList.remove('btn-secundario');
-        btn.classList.add('btn-danger');
-        btn.style.background = 'var(--danger-color, #fee2e2)';
-        btn.style.color = '#b91c1c';
-        btn.style.borderColor = '#fca5a5';
+            const h = Math.floor(smartTimerSeconds / 3600);
+            const m = Math.floor((smartTimerSeconds % 3600) / 60);
+            const s = smartTimerSeconds % 60;
+
+            let timeStr = '';
+            if (h > 0) {
+                timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            } else {
+                timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+
+            display.textContent = timeStr;
+        }, 1000);
     }
 }
