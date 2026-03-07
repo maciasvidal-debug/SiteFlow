@@ -1,5 +1,5 @@
 // Le damos un nombre a nuestra "memoria caché" (usamos versionado semántico)
-const NOMBRE_CACHE = 'siteflow-v2.4.1';
+const NOMBRE_CACHE = 'siteflow-v2.4.2';
 
 // Lista de archivos que queremos guardar en el teléfono
 const archivosACachear = [

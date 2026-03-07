@@ -1,16 +1,4 @@
 
-// Global Error Handler
-window.addEventListener('error', function(event) {
-    event.preventDefault();
-    console.clear();
-    mostrarToast('Ha ocurrido un error inesperado.', 'error');
-});
-
-window.addEventListener('unhandledrejection', function(event) {
-    event.preventDefault();
-    console.clear();
-    mostrarToast('Ha ocurrido un error inesperado.', 'error');
-});
 
 // --- PWA Service Worker Registration & Update Flow ---
 let nuevoWorker;
@@ -99,8 +87,8 @@ const State = {
 
 // --- Authentication & Session Management ---
 async function checkSession() {
-    if (!supabaseClient) { return mostrarLogin(); }
     try {
+        if (!supabaseClient) { return mostrarLogin(); }
         const result = await supabaseClient.auth.getSession();
         if (result.error) throw result.error;
         const session = result.data.session;
@@ -112,7 +100,6 @@ async function checkSession() {
     } catch (e) {
         console.error("Supabase no configurado o falló:", e);
         mostrarLogin();
-        return;
     }
 }
 
@@ -293,7 +280,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Initialize check
-    checkSession();
+    try {
+        checkSession();
+    } catch (e) {
+        console.error("Hard error calling checkSession:", e);
+        mostrarLogin();
+    }
 });
 
 // Stubs for core functions to be implemented in next step
@@ -1480,19 +1472,7 @@ if (typeof module !== 'undefined' && module.exports) {
         mostrarToast,
         cambiarVista
     };
-}// Global Error Handler
-window.addEventListener('error', function(event) {
-    event.preventDefault();
-    console.clear();
-    mostrarToast('Ha ocurrido un error inesperado.', 'error');
-});
-
-window.addEventListener('unhandledrejection', function(event) {
-    event.preventDefault();
-    console.clear();
-    mostrarToast('Error de conexión o de red.', 'error');
-});
-
+}
 // --- Smart Timer Logic ---
 let smartTimerInterval = null;
 let smartTimerSeconds = 0;
