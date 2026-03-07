@@ -41,7 +41,7 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     margin: 0;
-    padding: 20px;
+    padding: 0;
     line-height: 1.5;
 }
 
@@ -511,6 +511,7 @@ input, select, textarea, button, .nav-btn {
     background-color: var(--primary-color);
     color: white;
     z-index: 2000;
+    box-sizing: border-box;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -805,3 +806,145 @@ body.has-update-banner {
     to { transform: rotate(360deg); }
 }
 .splash-screen.oculto { pointer-events: none; display: none; }
+
+/* Smart Timer Redesign */
+.smart-timer-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: var(--surface-color);
+    padding: 12px 20px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+}
+.btn-smart-timer {
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 1;
+}
+.btn-smart-timer:hover {
+    background: rgba(37, 99, 235, 0.1);
+}
+.btn-smart-timer.running {
+    background: var(--error-color);
+    color: white;
+    border-color: var(--error-color);
+    animation: pulse-timer 1.5s infinite alternate;
+}
+@keyframes pulse-timer {
+    from { opacity: 0.8; box-shadow: 0 0 5px rgba(220, 38, 38, 0.5); }
+    to { opacity: 1; box-shadow: 0 0 15px rgba(220, 38, 38, 0.8); }
+}
+.tiempo-input-group {
+    display: flex;
+    gap: 10px;
+    flex: 1.5;
+    align-items: center;
+    justify-content: flex-end;
+}
+.time-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0 !important;
+}
+.time-input-wrapper label {
+    margin: 0;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+.time-input-wrapper input {
+    width: 60px !important;
+    padding: 8px 5px !important;
+    text-align: center;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 1rem;
+}
+.time-separator {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+@media (max-width: 480px) {
+    .smart-timer-container {
+        flex-direction: column;
+        padding: 15px;
+        gap: 15px;
+    }
+    .btn-smart-timer {
+        width: 100%;
+    }
+    .tiempo-input-group {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .time-input-wrapper input {
+        width: 100% !important;
+        max-width: 80px;
+    }
+}
+
+/* Full screen app adjustments for mobile */
+@media (max-width: 600px) {
+    body {
+        padding: 0 !important;
+    }
+    .container {
+        max-width: 100%;
+        margin: 0;
+        border-radius: 0;
+        min-height: 100vh;
+        box-shadow: none;
+    }
+    header {
+        border-radius: 0;
+    }
+    /* Ensure the padding inside nav and main is reasonable but stretches */
+    .nav-tabs {
+        border-radius: 0;
+        margin: 0;
+    }
+    main {
+        padding: 15px;
+        border-radius: 0;
+    }
+}
+
+/* For desktop, keep some spacing */
+@media (min-width: 601px) {
+    body {
+        padding: 20px;
+    }
+}
+
+/* Desktop adjustments for smart timer */
+@media (min-width: 601px) {
+    .smart-timer-container {
+        padding: 10px 30px;
+    }
+    .btn-smart-timer {
+        flex: 0.5;
+        max-width: 200px;
+    }
+    .tiempo-input-group {
+        flex: 1;
+        justify-content: flex-end;
+    }
+}
