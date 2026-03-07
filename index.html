@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>📈</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%232563eb%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><polyline points=%2222 12 18 12 15 21 9 3 6 12 2 12%22></polyline></svg>">
     <title>SiteFlow | Clinical Activity Logger</title>
 
     <!-- Supabase JS Client -->
@@ -144,19 +144,19 @@
 
                 <!-- Smart Timer Horizontal -->
                 <div class="smart-timer-container">
-                    <button type="button" id="btnSmartTimer" class="btn-smart-timer">
+                    <button type="button" id="btnSmartTimer" class="btn-smart-timer" aria-label="Iniciar cronómetro inteligente">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         <span id="textSmartTimer">Iniciar</span>
                     </button>
-                    <div class="tiempo-input-group">
+                    <div class="tiempo-input-group modern-time-input">
                         <div class="time-input-wrapper">
-                            <label for="inputHoras">H:</label>
-                            <input type="number" id="inputHoras" min="0" max="24" value="0" required aria-required="true">
+                            <input type="number" id="inputHoras" min="0" max="24" value="0" required aria-label="Horas" placeholder="00">
+                            <span class="time-unit">h</span>
                         </div>
                         <span class="time-separator">:</span>
                         <div class="time-input-wrapper">
-                            <label for="inputMinutos">M:</label>
-                            <input type="number" id="inputMinutos" min="0" max="59" value="0" required aria-required="true">
+                            <input type="number" id="inputMinutos" min="0" max="59" value="0" required aria-label="Minutos" placeholder="00">
+                            <span class="time-unit">m</span>
                         </div>
                     </div>
                 </div>
