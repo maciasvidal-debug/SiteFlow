@@ -8,3 +8,8 @@
 ## 2026-03-06 - Implement Splash Screen and UX fixes
 **Learning:** Adding DOM logic like `splashScreen` transitions requires defensive checks (`if (splash)`) and careful handling of async operations to ensure it doesn't break initial loads. Also, patching Supabase dependencies manually via JS regex or replaces can easily introduce typos (like `supabaseClientClient`), always verify function paths via automated unit tests and strictly typed references.
 **Action:** Implemented a minimal `splashScreen` loader component with SVG. Fixed `supabase.from` reference bug to `supabaseClient.from`. Enforced strictly "Zero White Boxes" on table and UI elements using dynamic CSS variables (`var(--surface-color)`). Increased PWA cache version (`sw.js`).
+
+## 2025-03-07 - Avoid Inline JavaScript Event Handlers with Interpolated Data
+**Vulnerability:** Inline event handlers (like `onclick="delete('${id}')"`) combined with interpolated database data in HTML strings bypass `escapeHTML` protection. The browser decodes HTML entities before executing the script, leaving the application open to Cross-Site Scripting (XSS).
+**Learning:** Even if data is sanitized via HTML entity encoding, interpolating it inside an HTML attribute that expects JavaScript code evaluates the decoded string directly as code.
+**Prevention:** Never use inline JavaScript event handlers (like `onclick`) when rendering dynamic lists. Instead, attach necessary data using `data-*` attributes and bind events securely via `addEventListener()` after the elements are added to the DOM.

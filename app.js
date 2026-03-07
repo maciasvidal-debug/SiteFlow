@@ -1271,14 +1271,15 @@ async function cargarVistaCatalogos() {
             tbodyC.innerHTML = '';
             selectCatForm.innerHTML = '<option value="" disabled selected>Seleccione Categoría</option>';
             categorias.forEach(c => {
-                tbodyC.innerHTML += `
-                    <tr>
-                        <td>${escapeHTML(c.name)}</td>
-                        <td>
-                            <button class="btn-peligro btn-accion" onclick="eliminarCatalogo('categories', '${c.id}')">Eliminar</button>
-                        </td>
-                    </tr>
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${escapeHTML(c.name)}</td>
+                    <td>
+                        <button class="btn-peligro btn-accion btn-eliminar-cat" data-id="${escapeHTML(c.id)}">Eliminar</button>
+                    </td>
                 `;
+                tr.querySelector('.btn-eliminar-cat').addEventListener('click', (e) => eliminarCatalogo('categories', e.currentTarget.dataset.id));
+                tbodyC.appendChild(tr);
                 selectCatForm.appendChild(crearOpcion(c.id, c.name));
             });
         }
@@ -1289,15 +1290,16 @@ async function cargarVistaCatalogos() {
             tbodyA.innerHTML = '';
             actividades.forEach(a => {
                 const catName = a.categories ? a.categories.name : 'N/A';
-                tbodyA.innerHTML += `
-                    <tr>
-                        <td><span style="font-size:0.8rem; color:#6b7280;">${escapeHTML(catName)}</span></td>
-                        <td><strong>${escapeHTML(a.name)}</strong></td>
-                        <td>
-                            <button class="btn-peligro btn-accion" onclick="eliminarCatalogo('activities', '${a.id}')">Eliminar</button>
-                        </td>
-                    </tr>
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span style="font-size:0.8rem; color:#6b7280;">${escapeHTML(catName)}</span></td>
+                    <td><strong>${escapeHTML(a.name)}</strong></td>
+                    <td>
+                        <button class="btn-peligro btn-accion btn-eliminar-act" data-id="${escapeHTML(a.id)}">Eliminar</button>
+                    </td>
                 `;
+                tr.querySelector('.btn-eliminar-act').addEventListener('click', (e) => eliminarCatalogo('activities', e.currentTarget.dataset.id));
+                tbodyA.appendChild(tr);
             });
         }
 
